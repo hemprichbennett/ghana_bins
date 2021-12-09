@@ -65,7 +65,7 @@ ggiNEXT(abun_iNEXT)
 big_iNEXT <- iNEXT(abundance_list, datatype = 'abundance',
                     q = c(1,2,3))
 fortified_iNEXT <- fortify(abun_iNEXT)
-
+write_csv(fortified_iNEXT, 'data/processed_data/fortified.csv')
 
 
 
