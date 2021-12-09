@@ -3,6 +3,7 @@
 library(tidyverse)
 library(iNEXT)
 library(gridExtra)
+
 mbrave_tib <- read_csv('data/mbrave_output.csv')
 
 mbrave_tib <- mbrave_tib %>%
@@ -35,6 +36,38 @@ bin_accumulation <-   mbrave_tib %>%
   summarise(n = n()) %>%
   pull(n) %>%
   iNEXT(.) 
+
+
+order_abundances <- mbrave_tib %>%
+  group_by(BIN_OTU, Order) %>%
+  summarise(n = n()) %>%
+  filter(n > 0) 
+
+abundance_list <- list()
+for(chosen_order in unique(order_abundances$Order)){
+  
+  abundance_vec <- order_abundances %>%
+    filter(Order == chosen_order) %>%
+    pull(n)
+  cat(chosen_order, 'contains', length(abundance_vec), 'different BINs\n')
+  # if the Order only contains a single BIN, abandon it
+  if(length(abundance_vec) > 10){
+    abundance_list[[chosen_order]] <-abundance_vec 
+  }
+  
+  }
+
+# make the iNEXT object
+abun_iNEXT <- iNEXT(abundance_list, datatype = 'abundance')
+ggiNEXT(abun_iNEXT)
+
+
+big_iNEXT <- iNEXT(abundance_list, datatype = 'abundance',
+                    q = c(1,2,3))
+fortified_iNEXT <- fortify(abun_iNEXT)
+
+
+
 
 all_bin_plot <- bin_accumulation %>%
   ggiNEXT() +
