@@ -40,12 +40,18 @@ data_import <- function(xl_path){
 }
 
 
-# now read in the data
+# now read in the data, with each spreadsheet being a different list item
 bold_list <- lapply(xl_paths, data_import)  
 
+# combine the list items into a single dataframe
 bold_data <- bind_rows(bold_list)
 
-nsamples <- filter(bold_data, !is.na(exact_site)) %>% nrow(.) %>% format(., big.mark = ',')
+# (for plotting later) make a string giving the number of samples which we have site information
+# for. 
+nsamples <- filter(bold_data, !is.na(exact_site)) %>% 
+  nrow(.) %>% 
+  # Format it with commas, to make it more human-readable
+  format(., big.mark = ',')
 
 # Basic plotting ----------------------------------------------------------
 
@@ -67,7 +73,8 @@ ggsave('figures/collection_date_histogram.jpeg', collection_date_histogram,
        width = 10)
 
 
-
+# make a plot of the number of samples of each taxonomic order sequenced
+# so far
 bold_data %>%
   group_by(order) %>%
   summarise(nsamples = n()) %>%
@@ -86,6 +93,9 @@ ggsave('figures/sample_taxonomy.jpeg', width = 14)
 
 # now we can work on the BINs and their known taxonomic information.
 
+
+# basic checking of how many samples actually have a BIN assigned
+# so far
 n_unassigned <- bold_data %>%
   filter(is.na(bin)) %>%
   nrow(.)
@@ -119,7 +129,12 @@ for(chosen_order in unique(order_bin_frequencies$order)){
   }
   
 }
- # make the iNEXT objects
+
+
+# make the iNEXT objects --------------------------------------------------
+
+
+# a basic iNEXT object with all items on a single plot
 abun_iNEXT <- iNEXT(abundance_list, datatype = 'abundance')
 basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
   theme(legend.position = 'bottom') + 
@@ -131,7 +146,19 @@ basic_gginext
 ggsave('figures/basic_gginext.jpeg', basic_gginext,
        width = 12)
 
+
+# now, we throw the kitchen sink at the dataset
 big_iNEXT <- iNEXT(abundance_list, datatype = 'abundance',
                    q = c(1,2,3))
+
+# using the fortify command we can turn the iNEXT object into a happy friendly 
+# dataframe, for easier analysis and plotting
 fortified_iNEXT <- fortify(big_iNEXT)
+# save the fortified object, as when we have lots of BINs the last few 
+# commands will take a long time
 write_csv(fortified_iNEXT, 'data/processed_data/fortified.csv')
+
+
+# I've not yet written it, but analysis and plotting of fortified_iNEXT
+# should happen in a different script, rather than having to repeatedly
+# rerun the above code.
