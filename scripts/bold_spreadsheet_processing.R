@@ -4,6 +4,7 @@ library(dplyr)
 library(janitor)
 library(tidyr)
 library(lubridate)
+library(ggplot2)
 # this assumes that the input data has had the redundant first two rows
 # (eyeroll) of the raw data on each spreadsheet removed
 xl_path <- ('data/processed_data/bold_tidied.xlsx')
@@ -19,3 +20,10 @@ bold_data <- xl_path %>%
   clean_names() %>%
   # make the dates usable, rather than a string
   mutate(collection_date = dmy(collection_date))
+
+# make a simple plot of the number of SAMPLES over time
+ggplot(bold_data, aes(x = collection_date)) + 
+  geom_histogram() +
+  theme_bw() +
+  xlab('Collection date') + 
+  ylab('Number of samples sequenced by December 10th 2021')
