@@ -10,6 +10,7 @@ library(janitor)
 library(tidyr)
 library(lubridate)
 library(ggplot2)
+library(readr)
 
 
 # Read in the data
