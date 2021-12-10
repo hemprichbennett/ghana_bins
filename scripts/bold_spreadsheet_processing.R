@@ -56,15 +56,54 @@ nsamples <- filter(bold_data, !is.na(exact_site)) %>%
 
 # Basic plotting ----------------------------------------------------------
 
+# function happily borrowed from https://stackoverflow.com/a/66583089
+# to make the histogram bins exactly one month wide. Otherwise they default to 
+# being ~30 days wide, which can get misleading
+by_month <- function(x,n=1){
+  seq(min(x,na.rm=T),max(x,na.rm=T),by=paste0(n," months"))
+}
 
+# for plotting, we'll want to have the x-axis going up in 6 month increments. So we want the 
+# first and last axis labels to be either January or July, depending on which is appropriate
+
+bold_field_data <- filter(bold_data, exact_site %in% c('Abutia Amegame', 'Mafi Agorve'))
+# get the first and last days in our dataset so far
+first_collection_day <- bold_field_data %>% pull(collection_date) %>% min(.)
+last_collection_day <- bold_field_data %>% pull(collection_date) %>% max(.)
+
+# make some values for happier plotting later, by giving some thresholds 
+# for the x-axis depending on our first and last collection day
+if(month(first_collection_day) <7){
+  date_1 <- paste0('01-01-', year(first_collection_day))
+  }else{
+  date_1 <- paste0('01-07-',year(first_collection_day))
+  }
+
+if(month(last_collection_day) <7){
+  date_2 <- paste0('01-07-', year(last_collection_day))
+}else{
+  date_2 <- paste0('01-01-',year(last_collection_day)+1)
+}
 
 # make a simple plot of the number of SAMPLES over time
-collection_date_histogram <- ggplot(filter(bold_data, !is.na(exact_site)), aes(x = collection_date)) + 
-  geom_histogram() +
+
+collection_date_histogram <- filter(bold_field_data, !is.na(exact_site)) %>%
+  ggplot(., aes(x = collection_date)) + 
+    # make the histogram breaks by month, using the function from above
+  geom_histogram(breaks = by_month(bold_field_data$collection_date)) +
+  # make subgraphs for each site
   facet_wrap(.~ exact_site) +
+  # cosmetic improvements
   theme_bw() +
-  theme(text = element_text(size = 20))+
+  theme(text = element_text(size = 20),
+        # rotate the x-axis labels
+        axis.text.x = element_text(angle = 45, hjust = 1))+
   ggtitle(paste('Collection dates of the', nsamples, 'samples with metadata sequenced by', download_date))+
+  # manually set the x-axis scale
+    scale_x_date(breaks = seq(dmy(date_1), 
+                            dmy(date_2), 
+                            by="4 months"), 
+               date_labels = "%b\n%Y")+
   xlab('Collection date') + 
   ylab('Number of samples sequenced')
 # show it
