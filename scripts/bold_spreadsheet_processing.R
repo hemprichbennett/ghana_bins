@@ -3,6 +3,7 @@
 
 # load packages
 library(readxl)
+library(iNEXT)
 library(purrr)
 library(dplyr)
 library(janitor)
@@ -62,6 +63,7 @@ collection_date_histogram <- ggplot(filter(bold_data, !is.na(exact_site)), aes(x
   geom_histogram() +
   facet_wrap(.~ exact_site) +
   theme_bw() +
+  theme(text = element_text(size = 20))+
   ggtitle(paste('Collection dates of the', nsamples, 'samples with metadata sequenced by', download_date))+
   xlab('Collection date') + 
   ylab('Number of samples sequenced')
