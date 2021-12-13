@@ -112,7 +112,7 @@ collection_date_histogram
 
 # save it
 ggsave('figures/collection_date_histogram.jpeg', collection_date_histogram,
-       width = 10)
+       width = 14)
 
 
 # make a plot of the number of samples of each taxonomic order sequenced
@@ -129,6 +129,24 @@ bold_data %>%
   ggtitle(paste('Taxonomic orders of the', nsamples, 'samples sequenced by', download_date))+
   labs(x = 'Taxonomic Order', y = 'Number of samples')
 ggsave('figures/sample_taxonomy.jpeg', width = 14)
+
+
+# now the same plot, but split between sites
+
+bold_data %>%
+  group_by(order, exact_site) %>%
+  filter(exact_site %in% c('Abutia Amegame', 'Mafi Agorve')) %>%
+  summarise(nsamples = n()) %>%
+  ggplot(., aes(x = order, y = nsamples)) +
+  geom_bar(stat = 'identity')+
+  facet_wrap(. ~ exact_site) +
+  theme_bw()+
+  scale_y_continuous(trans = 'log10') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        text = element_text(size = 20))+
+  ggtitle(paste('Taxonomic orders of the field samples sequenced by', download_date))+
+  labs(x = 'Taxonomic Order', y = 'Number of samples')
+ggsave('figures/site_taxonomy.jpeg', width = 14)
 
 
 # iNEXT data prep ---------------------------------------------------------
