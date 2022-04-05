@@ -59,6 +59,8 @@ nsamples <- filter(bold_data, !is.na(exact_site)) %>%
 # from our field sites, so exclude other 'test' samples
 bold_field_data <- filter(bold_data, exact_site %in% c('Abutia Amegame', 'Mafi Agorve'))
 
+write_csv(bold_field_data, 'data/processed_data/tidied_bold_data.csv')
+
 # Summary tables ----------------------------------------------------------
 
 # read in some common names for each taxonomic order, for the benefit
@@ -71,6 +73,7 @@ summary_table <- bold_field_data %>%
   group_by(exact_site, order) %>%
   summarise(`Number of samples sequenced` = n(), 
             `Number of unique BINs found` = length(unique(bin))) %>%
+  ungroup() %>%
   left_join(common_names) %>%
   rename(`Taxonomic order` = 'order',
          `English common name` = 'english_common_name') %>%
@@ -80,7 +83,16 @@ summary_table <- bold_field_data %>%
 summary_table
 
 # split the summary table into a list of two items, by sample site
-summary_table %>% split(f = .$exact_site)
+site_tables <- split(summary_table, f = summary_table$exact_site)
+
+# save the tables as csvs
+for(i in 1:length(site_tables)){
+  filename <- paste0('data/processed_data/', names(site_tables)[i], '_summary.csv')
+
+  site_tables[[i]] %>%
+    select(-exact_site) %>%
+    write_csv(., file = filename)
+}
 
 # Basic plotting ----------------------------------------------------------
 
