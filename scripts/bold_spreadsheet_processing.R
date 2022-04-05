@@ -19,7 +19,7 @@ library(readr)
 # (eyeroll) of the raw data on each spreadsheet removed
 xl_paths <- list.files(path = 'data/processed_data/', pattern = '*tidied*', full.names = T, recursive = T)
 
-download_date <- file.info('data/raw_data/')$ctime %>% 
+download_date <- file.info('data/raw_data/GCEP/bold.xlsx')$ctime %>% 
   ymd_hms() %>%
   format(., "%d %B %Y")
 
