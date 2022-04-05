@@ -55,6 +55,33 @@ nsamples <- filter(bold_data, !is.na(exact_site)) %>%
   # Format it with commas, to make it more human-readable
   format(., big.mark = ',')
 
+# a subset of field to use in later analyses: we only care about samples
+# from our field sites, so exclude other 'test' samples
+bold_field_data <- filter(bold_data, exact_site %in% c('Abutia Amegame', 'Mafi Agorve'))
+
+# Summary tables ----------------------------------------------------------
+
+# read in some common names for each taxonomic order, for the benefit
+# of any readers who aren't yet familiar with the Ixodida or Strepsiptera...
+
+common_names <- read_csv('data/order_common_names.csv')
+
+summary_table <- bold_field_data %>%
+  filter(!is.na(order)) %>%
+  group_by(exact_site, order) %>%
+  summarise(`Number of samples sequenced` = n(), 
+            `Number of unique BINs found` = length(unique(bin))) %>%
+  left_join(common_names) %>%
+  rename(`Taxonomic order` = 'order',
+         `English common name` = 'english_common_name') %>%
+  relocate(`English common name`, .after = `Taxonomic order`)
+
+
+summary_table
+
+# split the summary table into a list of two items, by sample site
+summary_table %>% split(f = .$exact_site)
+
 # Basic plotting ----------------------------------------------------------
 
 # function happily borrowed from https://stackoverflow.com/a/66583089
@@ -67,7 +94,6 @@ by_month <- function(x,n=1){
 # for plotting, we'll want to have the x-axis going up in 6 month increments. So we want the 
 # first and last axis labels to be either January or July, depending on which is appropriate
 
-bold_field_data <- filter(bold_data, exact_site %in% c('Abutia Amegame', 'Mafi Agorve'))
 # get the first and last days in our dataset so far
 first_collection_day <- bold_field_data %>% pull(collection_date) %>% min(.)
 last_collection_day <- bold_field_data %>% pull(collection_date) %>% max(.)
