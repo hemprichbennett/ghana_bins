@@ -17,7 +17,7 @@ library(readr)
 
 # this assumes that the input data has had the redundant first two rows
 # (eyeroll) of the raw data on each spreadsheet removed
-xl_paths <- list.files(path = 'data/processed_data/', pattern = '*tidied*', full.names = T, recursive = T)
+xl_paths <- list.files(path = 'data/processed_data', pattern = '*tidied*', full.names = T, recursive = T)
 
 download_date <- file.info('data/raw_data/GCEP/bold.xlsx')$ctime %>% 
   ymd_hms() %>%
@@ -48,6 +48,8 @@ bold_list <- lapply(xl_paths, data_import)
 # combine the list items into a single dataframe
 bold_data <- bind_rows(bold_list)
 
+write_csv(bold_data, 'data/processed_data/our_organised_bold_data.csv')
+
 # (for plotting later) make a string giving the number of samples which we have site information
 # for. 
 nsamples <- filter(bold_data, !is.na(exact_site)) %>% 
@@ -57,9 +59,10 @@ nsamples <- filter(bold_data, !is.na(exact_site)) %>%
 
 # a subset of field to use in later analyses: we only care about samples
 # from our field sites, so exclude other 'test' samples
-bold_field_data <- filter(bold_data, exact_site %in% c('Abutia Amegame', 'Mafi Agorve'))
-
-write_csv(bold_field_data, 'data/processed_data/tidied_bold_data.csv')
+bold_field_data <- bold_data %>%
+  filter(exact_site %in% c('Abutia Amegame', 'Mafi Agorve')) %>%
+    # if it doesn't have a BIN we don't want it
+    filter(!is.na(bin))
 
 # Summary tables ----------------------------------------------------------
 
@@ -155,7 +158,7 @@ ggsave('figures/collection_date_histogram.jpeg', collection_date_histogram,
 
 # make a plot of the number of samples of each taxonomic order sequenced
 # so far
-bold_data %>%
+bold_field_data %>%
   group_by(order) %>%
   summarise(nsamples = n()) %>%
   ggplot(., aes(x = order, y = nsamples)) +
@@ -171,7 +174,7 @@ ggsave('figures/sample_taxonomy.jpeg', width = 14)
 
 # now the same plot, but split between sites
 
-bold_data %>%
+bold_field_data %>%
   group_by(order, exact_site) %>%
   filter(exact_site %in% c('Abutia Amegame', 'Mafi Agorve')) %>%
   summarise(nsamples = n()) %>%
@@ -213,9 +216,20 @@ order_bin_frequencies <- bold_data %>%
   summarise(n = n()) %>%
   filter(n > 0) 
 
+order_nsamples <- order_bin_frequencies %>% 
+  group_by(order) %>% 
+  summarise(nsamples = sum(n))
+
+# get the names of the orders with 40 or more
+# samples
+to_inext <- order_nsamples %>%
+  filter(nsamples > 40) %>%
+  filter(!is.na(order)) %>%
+  pull(order)
+
 # for the orders, make a list of their frequencies
 abundance_list <- list()
-for(chosen_order in unique(order_bin_frequencies$order)){
+for(chosen_order in to_inext){
   
   abundance_vec <- order_bin_frequencies %>%
     filter(order == chosen_order) %>%
