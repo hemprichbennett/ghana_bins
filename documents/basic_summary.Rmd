@@ -1,0 +1,188 @@
+---
+title: "BIN summary so far"
+author: "Dave Hemprich-Bennett"
+date: "05/04/2022"
+output: html_document
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# This document needs the project scripts to have been ran beforehand, to provide it with
+# up-to date values
+library(tidyverse)
+library(here)
+our_big_df <- read_csv(here('data', 'processed_data', 'our_organised_bold_data.csv'))
+```
+
+This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 05/04/2022. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
+  
+  
+We have the following numbers of samples and BINs in each project:  
+  
+  
+
+```{r}
+our_big_df %>% 
+  group_by(project_code) %>% 
+  summarise(`Number of samples` = n(),
+            `Number of BINs` = length(unique(bin))) %>%
+  rename(`Project code` = project_code) %>%
+  knitr::kable()
+```
+  
+  
+  
+*(A sidenote in case anyone compares these values to those on the BOLD portal: there is a tiny difference between the number of BINs reported above, and those on the summary data that you see in our console on BOLD. That's because on BOLD's summary data it counts, for example, 'BOLD:AEK3140' in project TMGHA as two distinct BINs because some of our samples matching that BIN have been visually classified as Coleoptera, and the rest of our samples matching that BIN have been visually classified as Staphylinidae. As Staphylinidae is a family within the Coleoptera, for our purposes I count that as a single BIN rather than being two discrete taxonomic units. BOLD's UI makes me sad.)*  
+  
+  
+    
+    
+BOLD's portal lets us see which of our BINs are unique to our project, and which have been sequenced by other research groups. I've organised this data a bit, so we can see a taxonomic and site-based breakdown of our samples.  
+  
+  
+I also queried BOLD's public database for each of our BINs, to find the data availability of all the BINs we've sequenced so far. This lets us know the PUBLIC availability of the 'non-unique' BINs in our study so far: BINs which other researchers have also sequenced. By default BOLD gives us information on if our BINs are 'unique' to our project or not, but no information on the availability of our 'non-unique' BINs, which I think is also an interesting subject. While it's exciting that lots of the BINs which we're sequencing are new to science, it's also nice to know how many of our non-new BINs are currently hiding within private databases. When we make our dataset open, those will also be new to the wider scientific community.  
+  
+# Overall sample-based uniqueness
+```{r}
+overall_sample_uniqueness <- read_csv(here('results', 'unique_data', 'overall_sample_uniqueness.csv')) %>%
+  rename(Order = order,
+         `English common name` = english_common_name) 
+
+coleoptera_samples <- overall_sample_uniqueness %>% 
+  filter(Order == 'Coleoptera') %>% 
+  select(-c(1:2))
+```
+  
+Here is the BIN availability status of all of the samples we've sequenced so far.   
+  
+  
+For example, we've sequenced `r sum(coleoptera_samples)` individual Coleoptera samples, of which `r coleoptera_samples[1]` matched BINs which are already publicly available, `r coleoptera_samples[2]` matched BINs which have been sequenced by others but are not yet publicly available on BOLD, and `r coleoptera_samples[3]` are BINs that are only known from our projects.  
+  
+  ```{r}
+knitr::kable(overall_sample_uniqueness)
+```
+ 
+  
+# Overall bin-based uniqueness
+  
+```{r}
+overall_bin_uniqueness <- read_csv(here('results', 'unique_data', 'overall_bin_uniqueness.csv')) %>%
+  rename(Order = order,
+         `English common name` = english_common_name) 
+
+coleoptera_bins <- overall_bin_uniqueness %>% 
+  filter(Order == 'Coleoptera') %>% 
+  select(-c(1:2))
+```
+  
+And here is the data if we count BINs, rather than samples.  
+  
+For example, the Coleoptera that we've sequenced have been assigned to `r sum(coleoptera_bins)` different BINs. `r coleoptera_bins[1]` of those BINs are already publicly available, `r coleoptera_bins[2]` BINs have been sequenced by others but are not yet publicly available on BOLD, and `r coleoptera_bins[3]` BINs are only known from our projects.  
+  
+  
+```{r}
+knitr::kable(overall_bin_uniqueness)
+```
+ 
+
+I've obtained further taxonomic and geographic information for all of the public records on BOLD which match our BINs, but have yet to do anything with it. I originally tried to plot the above datasets, but the wildly differing numbers per-taxa made choosing an appropriate y-axis difficult. Any suggestions for analyses and/or figures are gratefully received :)  
+
+# Overall taxonomic composition
+
+Ignoring data-availability as a variable, here's the taxonomic composition of our samples so far:
+  
+  
+![](../figures/sample_taxonomy.jpeg)
+  
+  
+# Accumulation rates
+  
+  
+Using the above information we can also calculate the rates of BIN accumulation for our most-common taxonomic groups, and extrapolate from that rate to see if we're approaching an asymptote. In brief: we're not.  
+  
+  
+  
+![](../figures/basic_gginext.jpeg)
+  
+  
+  
+  
+  
+  
+  
+  
+
+# Gratuitous over-analysing / breaking data down by village
+  
+  
+I'm assuming that most of you won't be so keen on seeing the below data, but I've also broken our data down by village in case it's of interest. Feel free to exit now if this isn't so interesting.  
+
+
+## Sample-based uniqueness
+
+### Abutia Amegame:
+   
+   
+   
+```{r}
+read_csv(here('results', 'unique_data', 'abutia_sample_uniqueness.csv')) %>%
+  rename(Order = order,
+         `English common name` = english_common_name) %>%
+  knitr::kable()
+```
+
+   
+   
+   
+   
+   
+### Mafi Agorve:
+   
+   
+   
+```{r}
+read_csv(here('results', 'unique_data', 'mafi_sample_uniqueness.csv')) %>%
+  rename(Order = order,
+         `English common name` = english_common_name) %>%
+  knitr::kable()
+```
+
+   
+   
+   
+   
+   
+## BIN-based uniqueness
+
+### Abutia Amegame:
+   
+   
+   
+```{r}
+read_csv(here('results', 'unique_data', 'abutia_bin_uniqueness.csv')) %>%
+  rename(Order = order,
+         `English common name` = english_common_name) %>%
+  knitr::kable()
+```
+
+   
+   
+   
+   
+   
+### Mafi Agorve:
+   
+   
+   
+```{r}
+read_csv(here('results', 'unique_data', 'mafi_bin_uniqueness.csv')) %>%
+  rename(Order = order,
+         `English common name` = english_common_name) %>%
+  knitr::kable()
+```
+
+   
+   
+   
+   
+   
