@@ -90,6 +90,9 @@ main_df <- overall_availability %>%
             by = c('BIN' = 'bin')) %>%
   left_join(common_names)
 
+# save this as a csv, as the big dataset will be useful to us later
+write_csv(main_df, 'data/processed_data/bold_data_with_availability.csv')
+
 # this returns the OVERALL number of SAMPLES which had a given
 # availability
 main_df %>%
