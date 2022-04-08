@@ -6,3 +6,7 @@
 data/*
 figures/*
 results/*
+*.html
+*.pdf
+*.jpg
+*.jpeg
