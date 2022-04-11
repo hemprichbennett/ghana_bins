@@ -167,11 +167,11 @@ ggplot(country_percentage_BINs_present,
 
 
 country_bin_summary <- country_percentage_BINs_present %>%
-  select(country, plotting_label, local_n_bins) %>%
-  pivot_wider(names_from = plotting_label, 
+  select(country, order_name, local_n_bins) %>%
+  pivot_wider(names_from = order_name, 
               values_from = local_n_bins,
               values_fill = 0) %>%
-  arrange(desc(country))
+  arrange(country)
 write_csv(country_bin_summary, 'results/public_data/orders_by_country.csv')
 
 
@@ -183,10 +183,9 @@ country_percentage_BINs_present %>%
   summarise(n = sum(local_n_bins)) %>%
   filter(n >= bin_threshold) %>%
   left_join(country_percentage_BINs_present) %>%
-  select(country, plotting_label, local_n_bins) %>%
-  pivot_wider(names_from = plotting_label, 
+  select(country, order_name, local_n_bins) %>%
+  pivot_wider(names_from = country, 
               values_from = local_n_bins,
               values_fill = 0) %>%
-  arrange(desc(country)) %>%
   write_csv('results/public_data/orders_in_commonest_countries.csv')
 
