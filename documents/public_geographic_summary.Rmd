@@ -63,6 +63,22 @@ our_big_df %>%
 With that in mind, here is a taxonomic breakdown of the public BINs in common with our project, from the 20 countries which had the most BINs in common with our project:
 
 ```{r}
+our_big_df %>%
+  select(country, bin_uri) %>%
+  distinct() %>%
+  group_by(country) %>%
+  summarise(`Number of shared BINs` = n()) %>%
+  arrange(desc(`Number of shared BINs`)) %>%
+  slice(1:20) %>%
+  rename(Country = country) %>%
+  mutate('Ranking' = rownames(.)) %>%
+  select(Ranking, Country, `Number of shared BINs`) %>%
+  knitr::kable()
+```
+
+
+
+```{r}
 read_csv(here('results', 'public_data', 'orders_top_countries.csv')) %>%
   arrange(country) %>%
   knitr::kable()
