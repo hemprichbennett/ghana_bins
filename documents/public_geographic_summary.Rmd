@@ -1,0 +1,77 @@
+---
+title: "Geographic BIN summary"
+author: "Dave Hemprich-Bennett"
+date: "11/04/2022"
+output: html_document
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# This document needs the project scripts to have been ran beforehand, to provide it with
+# up-to date values
+library(tidyverse)
+library(here)
+library(countrycode)
+library(ggridges)
+our_big_df <- read_csv(here('data', 'processed_data', 'bold_public_bin_matches.csv'))%>%
+  mutate(geographic_region = countrycode(sourcevar = country, 
+                                         origin = "country.name",
+                                         destination = "region")
+  ) %>%
+  filter(!is.na(geographic_region), 
+         !is.na(order_name))
+
+
+```
+This is a summary of the public data matching our BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 05/04/2022.  
+
+There were ```r our_big_df %>% select(bin_uri) %>% distinct() %>% nrow()``` distinct BINs in our project which are also found publicly on BOLD. Those BINs are found across ```r our_big_df %>% select(country) %>% distinct() %>% nrow()``` countries in ```r our_big_df %>% select(geographic_region) %>% distinct() %>% nrow()``` geographic regions, as shown below:
+
+
+```{r}
+read_csv(here('results', 'public_data', 'orders_by_region.csv')) %>%
+  knitr::kable()
+```
+
+We could make a breakdown showing each of those ```r our_big_df %>% select(country) %>% distinct() %>% nrow()``` countries, but that would be hellish to look at, especially given the very left-skewed number of BINs found per-country:
+
+```{r}
+our_big_df %>% 
+  select(geographic_region, country, bin_uri) %>% 
+  distinct() %>%
+  group_by(country, geographic_region) %>%
+  summarise(nbins = n()) %>%
+  ungroup() %>%
+  ggplot(., aes(x = nbins, y = geographic_region)) +
+  geom_density_ridges()+
+  theme_ridges() +
+  labs(x = "Number of BINs matching our project\nin each country with 1 or more BINs in common with us")
+
+
+# our_big_df %>% 
+#   select(geographic_region, country, bin_uri) %>% 
+#   distinct() %>%
+#   group_by(country, geographic_region) %>%
+#   summarise(nbins = n()) %>%
+#   group_by(geographic_region) %>%
+#   summarise(m = mean(nbins),
+#             deviation = sd(nbins))
+
+```
+
+
+With that in mind, here is a taxonomic breakdown of the public BINs in common with our project, from the 20 countries which had the most BINs in common with our project:
+
+```{r}
+read_csv(here('results', 'public_data', 'orders_top_countries.csv')) %>%
+  arrange(country) %>%
+  knitr::kable()
+```
+
+And if we restrict the public data to just BINs from Africa and the Middle East:
+
+```{r}
+read_csv(here('results', 'public_data', 'orders_by_nearby_countries.csv')) %>%
+  knitr::kable()
+```
+
