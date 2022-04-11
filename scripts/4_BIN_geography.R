@@ -59,35 +59,6 @@ public_bins_df %>%
 
 
 
-
-public_bins_df %>%
-  filter(!is.na(geographic_region)) %>%
-  group_by(bin_uri, geographic_region) %>%
-  summarise(nsamples = n()) %>%
-  group_by(geographic_region, nsamples) %>%
-  summarise(nmatches = n()) %>%
-  ggplot(., aes(x = nsamples, y = nmatches))+
-  geom_point()+ 
-  facet_wrap(. ~ geographic_region) +
-  theme_bw()+
-  scale_y_log10() +
-  scale_x_log10() 
-# I don't even really know what this is showing rn
-
-public_bins_df %>%
-  filter(geographic_region %in% c("Sub-Saharan Africa",
-                                  "Middle East & North Africa")) %>%
-  group_by(bin_uri, geographic_region, order_name) %>%
-  summarise(nsamples = n()) %>%
-  group_by(geographic_region, nsamples, order_name) %>%
-  summarise(nmatches = n()) %>%
-  ggplot(., aes(x = nsamples, y = nmatches))+
-  geom_point()+ 
-  facet_grid( geographic_region ~ order_name) +
-  theme_bw()+
-  scale_y_log10() +
-  scale_x_log10() 
-
 # make an object thats just the number of BINs we have for each 
 # taxonomic order
 distinct_bins <- public_bins_df %>%
@@ -113,6 +84,34 @@ region_percentage_BINs_present <- public_bins_df %>%
     percentage = local_n_bins / global_distinct_bins * 100,
     plotting_label = paste0(order_name, ', ', global_distinct_bins, ' public BINs')) 
 
+
+# make a table of the top countries for number of BIN matches
+
+top_countries <- public_bins_df %>%
+  filter(!is.na(country), !is.na(order_name)) %>%
+  select(country, bin_uri) %>%
+  distinct() %>%
+  group_by(country) %>%
+  summarise(nbins = n()) %>%
+  # reorder by n, with highest values at the top
+  arrange(desc(nbins)) %>%
+  slice(1:20) %>%
+  pull(country)
+
+# now use that to make a table of the taxonomic
+# composition of the BINs in common with those countries
+
+public_bins_df %>%
+  filter(!is.na(country), !is.na(order_name)) %>%
+  filter(country %in% top_countries) %>%
+  select(country, order_name, bin_uri) %>%
+  distinct() %>%
+  group_by(country, order_name) %>%
+  summarise(nbins = n()) %>%
+  arrange(order_name) %>%
+  pivot_wider(names_from = order_name, values_from = nbins,
+              values_fill = 0) %>%
+  write_csv('results/public_data/orders_top_countries.csv')
 
 ggplot(region_percentage_BINs_present, 
        aes(x = geographic_region,
