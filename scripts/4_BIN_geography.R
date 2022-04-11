@@ -123,11 +123,10 @@ ggplot(region_percentage_BINs_present,
 
 
 geographic_region_bin_summary <- region_percentage_BINs_present %>%
-  select(geographic_region, plotting_label, local_n_bins) %>%
-  pivot_wider(names_from = plotting_label, 
+  select(geographic_region, order_name, local_n_bins) %>%
+  pivot_wider(names_from = geographic_region, 
               values_from = local_n_bins,
-              values_fill = 0) %>%
-  arrange(desc(geographic_region))
+              values_fill = 0)
 write_csv(geographic_region_bin_summary, 'results/public_data/orders_by_region.csv')
 
 
@@ -169,7 +168,7 @@ country_bin_summary <- country_percentage_BINs_present %>%
               values_from = local_n_bins,
               values_fill = 0) %>%
   arrange(country)
-write_csv(country_bin_summary, 'results/public_data/orders_by_country.csv')
+write_csv(country_bin_summary, 'results/public_data/orders_by_nearby_countries.csv')
 
 
 # lets make a heatmap of only countries that have over n bins in common with
