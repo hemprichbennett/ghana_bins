@@ -8,8 +8,6 @@ library(tidyverse)
 library(countrycode)
 
 
-our_samples_df <- read_csv('data/processed_data/bold_data_with_availability.csv')
-
 public_bins_df <- read_csv('data/processed_data/bold_public_bin_matches.csv') %>%
   mutate(geographic_region = countrycode(sourcevar = country, 
                                          origin = "country.name",
