@@ -5,7 +5,11 @@
 
 
 library(tidyverse)
-in_df <- read_csv('2021_08_09_Individuals.csv')
+filepath <- 'data/raw_data/earthcape_exports/2021_08_09_Individuals.csv'
+in_df <- read_csv('data/raw_data/earthcape_exports/2021_08_09_Individuals.csv')
+
+date_of_export <- gsub('.+/|_Individuals.+', '', filepath) %>%
+  lubridate::ymd()
 
 firstup <- function(x) {
   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
@@ -24,6 +28,7 @@ ggplot(in_df, aes(x = Order, y = n)) +
   theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         text = element_text(size = 20))+
+  scale_y_continuous(trans = 'log10') +
   labs(x = 'Taxonomic Order', y = 'Number of samples')
 
-ggsave(filename = 'crag_stuff/plots/nsamples.jpeg', width = 12)
+ggsave(filename = 'figures/nsamples.jpeg', width = 12)
