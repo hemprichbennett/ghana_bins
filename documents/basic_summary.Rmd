@@ -1,7 +1,7 @@
 ---
 title: "BIN summary so far"
 author: "Dave Hemprich-Bennett"
-date: "05/04/2022"
+date: "14/06/2022"
 output: html_document
 ---
 
@@ -14,7 +14,7 @@ library(here)
 our_big_df <- read_csv(here('data', 'processed_data', 'our_organised_bold_data.csv'))
 ```
 
-This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 05/04/2022. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
+This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 14/06/2022. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
   
   
 We have the following numbers of samples and BINs in each project:  
@@ -32,7 +32,7 @@ our_big_df %>%
   
   
   
-*(A sidenote in case anyone compares these values to those on the BOLD portal: there is a tiny difference between the number of BINs reported above, and those on the summary data that you see in our console on BOLD. That's because on BOLD's summary data it counts, for example, 'BOLD:AEK3140' in project TMGHA as two distinct BINs because some of our samples matching that BIN have been visually classified as Coleoptera, and the rest of our samples matching that BIN have been visually classified as Staphylinidae. As Staphylinidae is a family within the Coleoptera, for our purposes I count that as a single BIN rather than being two discrete taxonomic units. BOLD's UI makes me sad.)*  
+<!--*(A sidenote in case anyone compares these values to those on the BOLD portal: there is a tiny difference between the number of BINs reported above, and those on the summary data that you see in our console on BOLD. That's because on BOLD's summary data it counts, for example, 'BOLD:AEK3140' in project TMGHA as two distinct BINs because some of our samples matching that BIN have been visually classified as Coleoptera, and the rest of our samples matching that BIN have been visually classified as Staphylinidae. As Staphylinidae is a family within the Coleoptera, for our purposes I count that as a single BIN rather than being two discrete taxonomic units. BOLD's UI makes me sad.)*  -->
   
   
     
@@ -40,7 +40,7 @@ our_big_df %>%
 BOLD's portal lets us see which of our BINs are unique to our project, and which have been sequenced by other research groups. I've organised this data a bit, so we can see a taxonomic and site-based breakdown of our samples.  
   
   
-I also queried BOLD's public database for each of our BINs, to find the data availability of all the BINs we've sequenced so far. This lets us know the PUBLIC availability of the 'non-unique' BINs in our study so far: BINs which other researchers have also sequenced. By default BOLD gives us information on if our BINs are 'unique' to our project or not, but no information on the availability of our 'non-unique' BINs, which I think is also an interesting subject. While it's exciting that lots of the BINs which we're sequencing are new to science, it's also nice to know how many of our non-new BINs are currently hiding within private databases. When we make our dataset open, those will also be new to the wider scientific community.  
+<!--I also queried BOLD's public database for each of our BINs, to find the data availability of all the BINs we've sequenced so far. This lets us know the PUBLIC availability of the 'non-unique' BINs in our study so far: BINs which other researchers have also sequenced. By default BOLD gives us information on if our BINs are 'unique' to our project or not, but no information on the availability of our 'non-unique' BINs, which I think is also an interesting subject. While it's exciting that lots of the BINs which we're sequencing are new to science, it's also nice to know how many of our non-new BINs are currently hiding within private databases. When we make our dataset open, those will also be new to the wider scientific community.  -->
   
 # Overall sample-based uniqueness
 ```{r}
