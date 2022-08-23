@@ -5,21 +5,23 @@
 
 
 library(tidyverse)
-filepath <- 'data/raw_data/earthcape_exports/2021_08_09_Individuals.csv'
-in_df <- read_csv('data/raw_data/earthcape_exports/2021_08_09_Individuals.csv')
+file_path <- list.files('data/raw_data/earthcape_exports/', full.names = T) %>%
+  max(.) 
 
-date_of_export <- gsub('.+/|_Individuals.+', '', filepath) %>%
+in_df <- read_csv(file_path) %>%
+  janitor::clean_names()
+
+date_of_export <- gsub('.+/|_Individuals.+', '', file_path) %>%
   lubridate::ymd()
 
-firstup <- function(x) {
-  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
-  x
-}
-
 in_df <- in_df %>%
-  # the cases are mixed
-  mutate(Order = str_to_lower(Order)) %>%
-  mutate(Order = firstup(Order)) %>%
+  # Various string substitutions to convert temporary_name
+  # to a uniform, pleasant, format
+  mutate(Order = gsub('_.+', '', temporary_name)) %>%
+  mutate(Order = gsub('_', '', Order)) %>%
+  mutate(Order = str_to_title(Order)) %>%
+  # Remove 'Larvae' as that isn't a taxonomic order
+  filter(Order != 'Larvae') %>%
   group_by(Order) %>%
   summarise(n = n())
 
