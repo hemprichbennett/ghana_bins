@@ -159,6 +159,7 @@ ggsave('figures/collection_date_histogram.jpeg', collection_date_histogram,
 # make a plot of the number of samples of each taxonomic order sequenced
 # so far
 bold_field_data %>%
+  filter(!is.na(order)) %>%
   group_by(order) %>%
   summarise(nsamples = n()) %>%
   ggplot(., aes(x = order, y = nsamples)) +
@@ -175,6 +176,7 @@ ggsave('figures/sample_taxonomy.jpeg', width = 14)
 # now the same plot, but split between sites
 
 bold_field_data %>%
+  filter(!is.na(order)) %>%
   group_by(order, exact_site) %>%
   filter(exact_site %in% c('Abutia Amegame', 'Mafi Agorve')) %>%
   summarise(nsamples = n()) %>%
