@@ -1,7 +1,7 @@
 ---
 title: "BIN summary so far"
 author: "Dave Hemprich-Bennett"
-date: "14/06/2022"
+date: "26/10/2022"
 output: html_document
 ---
 
@@ -14,7 +14,7 @@ library(here)
 our_big_df <- read_csv(here('data', 'processed_data', 'our_organised_bold_data.csv'))
 ```
 
-This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 14/06/2022. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
+This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 20/10/2022. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
   
   
 We have the following numbers of samples and BINs in each project:  
