@@ -1,7 +1,7 @@
 ---
 title: "Geographic BIN summary"
 author: "Dave Hemprich-Bennett"
-date: "11/04/2022"
+date: "`r format(Sys.time(), '%a %d %b, %Y')`"
 output: html_document
 ---
 

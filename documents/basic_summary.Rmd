@@ -1,7 +1,7 @@
 ---
 title: "BIN summary so far"
 author: "Dave Hemprich-Bennett"
-date: "26/10/2022"
+date: "`r format(Sys.time(), '%a %d %b, %Y')`"
 output: html_document
 ---
 
