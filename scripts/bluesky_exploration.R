@@ -12,6 +12,7 @@ unique(our_big_df$sampling_protocol)
 # stacked barplots (I know...) of them
 tileplot <- function(data, filter_by){
   data %>%
+    filter(!is.na(order)) %>%
     filter(sampling_protocol == filter_by) %>%
     select(bin, sampling_protocol, order, family, genus, exact_site) %>%
     group_by(order, exact_site) %>%
@@ -21,8 +22,11 @@ tileplot <- function(data, filter_by){
     theme_classic() +
     theme(legend.position = 'bottom')+
     xlab('Site')+
-    ylab('Proportion of BINs identified to Order level')+
-    ggtitle(paste0('Stacked barplot of the BINs collected by ', filter_by, 's'))
+    ylab('Number of BINs sequenced and identified to Order level')+
+    ggtitle(paste0('Stacked barplot of the BINs collected by ', filter_by, 's'))+
+    # make the plot in the sensible, alphabetical order, rather than the weird
+    # default, which has 'A' at the bottom
+    scale_y_discrete(limits=rev)
 }
 
 tileplot(our_big_df, filter_by = 'Sweep Net')    
