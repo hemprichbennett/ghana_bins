@@ -11,3 +11,4 @@ results/*
 *.jpg
 *.jpeg
 params.py
+*.pyc
