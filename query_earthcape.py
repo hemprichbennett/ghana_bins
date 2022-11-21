@@ -19,7 +19,7 @@ for field in desired_queries:
     # check to see if the df contains anything (has a size greater than zero)
     if df.size > 0:
         # write the file
-        df.to_csv('./data/query_results/' + field + '.csv')
+        df.to_csv('./data/earthcape_query/' + field + '.csv')
     else:
         print(field + ' has zero size')
  
