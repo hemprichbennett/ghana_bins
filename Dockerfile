@@ -12,6 +12,6 @@ RUN pip install pymssql pandas sqlalchemy
 
 COPY Rprofile.site /etc/R
 
-RUN install.r remotes
+RUN install2.r remotes
 COPY DESCRIPTION .
 RUN Rscript -e "remotes::install_deps()"

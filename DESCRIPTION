@@ -1,0 +1,14 @@
+Imports:
+  readxl,
+  iNEXT,
+  purrr,
+  dplyr,
+  janitor,
+  tidyr,
+  lubridate,
+  ggplot2,
+  readr,
+  tidyverse,
+  bold,
+  countrycode,
+  here
