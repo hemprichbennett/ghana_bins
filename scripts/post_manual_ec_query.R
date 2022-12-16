@@ -147,7 +147,7 @@ tib_for_inext <- too_many_cols %>%
   summarise(nsamples = n())
 
 # only work on orders with at least the below number of bins
-nbin_threshold <- 50
+nbin_threshold <- 20
 
 desired_orders <- tib_for_inext %>%
   group_by(order) %>%
@@ -178,17 +178,29 @@ for(trap_type in traptypes){
       filter(Type == trap_type) %>%
       filter(order == o) %>%
       group_by(bin) %>%
-      summarise(freq = n()) %>%
+      summarise(freq = n())%>%
       pull(freq) %>%
       sort(decreasing = T)
-    for_inext_list[[trap_type]][[o]] <- c(n_events, incidence_freq)
+    # if there are fewer than ten unique BINs in this
+    # trap type , discard the order, otherwise save it for analysis
+    if(length(incidence_freq) >= 15){
+      for_inext_list[[trap_type]][[o]] <- c(n_events, incidence_freq)
+    }
+    
   }
-  inext_objs[[trap_type]] <- iNEXT(for_inext_list[[trap_type]], q = 0,
+  inext_objs[[trap_type]] <- iNEXT(for_inext_list[[trap_type]], 
+                                  q = c(0, 1, 2),
                       datatype = 'incidence_freq',
                       size = seq(1,n_events*4, by = n_events/10))
-  inext_plots[[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=1, color.var="Assemblage") +
+  inext_plots[[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=2, 
+                                      color.var="Assemblage",
+                                      se = F) +
     theme_bw(base_size = 18) +
-    theme(legend.position="bottom") + ylab('BIN diversity')+ ggtitle(trap_type)
-  ggsave(paste0('figures/inext_plots/', trap_type, '.pdf'), inext_plots[[trap_type]])
+    theme(legend.position="bottom",
+          legend.box = "vertical") + 
+    ggtitle(trap_type) 
+  ggsave(paste0('figures/inext_plots/', trap_type, '.pdf'), 
+         inext_plots[[trap_type]],
+         width = 8)
   
 }
