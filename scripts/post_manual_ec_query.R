@@ -192,20 +192,3 @@ for(trap_type in traptypes){
   ggsave(paste0('figures/inext_plots/', trap_type, '.pdf'), inext_plots[[trap_type]])
   
 }
-trap_inext <- iNEXT(for_inext_list[['heath']], q = 0,
-                     datatype = 'incidence_freq',
-                     size = seq(1,400, by = 10))
-
-ggiNEXT(trap_inext, type=1, color.var="Assemblage") +
-  theme_bw(base_size = 18) +
-  theme(legend.position="bottom")
-
-# example inext run
-data(ant)
-
-t <- seq(1, 700, by=10)
-out.inc <- iNEXT(ant, q=0, datatype="incidence_freq", size=t)
-
-ggiNEXT(out.inc, type=1, color.var="Assemblage") +
-  theme_bw(base_size = 18) +
-  theme(legend.position="None")
