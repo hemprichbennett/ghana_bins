@@ -21,9 +21,12 @@ ec_referenced <- bold_organised %>%
 unmatched <- ec_referenced %>%
   filter(in_individuals == F & in_transects == F)
 
+duplicate_matches <- ec_referenced %>%
+  filter(in_individuals == T & in_transects == T)
+
 # Annoyingly in the data there seems to be a mix of hyphens and underscores
 # used as delimiters for transect names. They're mostly paired fine, but BOLD
-# has samples with field_id '2-MA-NE-2' but earthcape cals it '2_MA_NE_2'
+# has samples with field_id '2-MA-NE-2' but earthcape calls it '2_MA_NE_2'
 
 ec_referenced <- ec_referenced %>% 
   mutate(better_field_id = 
@@ -76,7 +79,7 @@ n_heaths <- for_transects %>%
 # a transect having two heath traps
 
 duplicate_heaths <- for_transects %>%
-  filter(Type == 'Heath') %>%
+  filter(Type == 'heath') %>%
   group_by(Transect) %>%
   summarise(n_heaths = n()) %>%
   filter(n_heaths >1) %>%
@@ -105,8 +108,8 @@ transect_referenced <- ec_referenced %>%
 
 
 
-# if we ignore that for now, we can make a big df of all the earthcape-matched
-# data
+# if we ignore the issue of duplicate heaths for now, 
+# we can make a big df of all the earthcape-matched data
 too_many_cols <- bind_rows(individual_referenced, transect_referenced)
 
 # as we know that some heath samples from BOLD weren't paired with a lot but 
@@ -122,6 +125,7 @@ too_many_cols <- too_many_cols %>%
     field_id,
     # else use the lot, as its fine
     Lot)) %>%
+    # same for Type
   mutate(Type = ifelse(
     is.na(Type) & sampling_protocol == "heath",
     sampling_protocol,
@@ -130,7 +134,7 @@ too_many_cols <- too_many_cols %>%
 
 
 
-# make a very basic summary
+# make a very basic summary plot
 too_many_cols %>%
   filter(!is.na(order)) %>%
   group_by(order, sampling_event, Type) %>%
@@ -143,13 +147,14 @@ too_many_cols %>%
 tib_for_inext <- too_many_cols %>%
   filter(!is.na(bin)) %>%
   select(bin, order, sampling_event, Type) %>%
-  group_by(order, sampling_event, bin, Type) %>%
+  group_by_all() %>%
   summarise(nsamples = n())
 
 # only work on orders with at least the below number of bins
 nbin_threshold <- 20
 
 desired_orders <- tib_for_inext %>%
+  filter(!is.na(order)) %>%
   group_by(order) %>%
   summarise(bin_richness = length(unique(bin))) %>%
   filter(bin_richness >= nbin_threshold) %>%
@@ -163,16 +168,19 @@ traptypes <- tib_for_inext %>%
 for_inext_list <- list()
 inext_objs <- list()
 inext_plots <- list()
+inext_plots[['completeness']] <- list()
+inext_plots[['extrapolation']] <- list()
 for(trap_type in traptypes){
   #cat(o, '\n')
   for_inext_list[[trap_type]] <- list()
+  n_events <- tib_for_inext %>%
+    filter(Type == trap_type) %>%
+    pull(sampling_event) %>%
+    unique() %>%
+    length()
   for(o in desired_orders){
     cat('trap type is ', trap_type, '\n')
-    n_events <- tib_for_inext %>%
-      filter(Type == trap_type) %>%
-      pull(sampling_event) %>%
-      unique() %>%
-      length()
+    
     cat('order is ', o, 'trap type is ', trap_type, ' number of sampling events was', n_events, '\n')
     incidence_freq <- tib_for_inext %>%
       filter(Type == trap_type) %>%
@@ -189,18 +197,86 @@ for(trap_type in traptypes){
     
   }
   inext_objs[[trap_type]] <- iNEXT(for_inext_list[[trap_type]], 
-                                  q = c(0, 1, 2),
+                                  #q = c(0, 1, 2),
+                                  q = 0, # get 'species' richness 
                       datatype = 'incidence_freq',
-                      size = seq(1,n_events*4, by = n_events/10))
-  inext_plots[[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=2, 
-                                      color.var="Assemblage",
+                      size = round(seq(1,n_events*4, by = n_events/10)),
+                      se=FALSE)
+  
+  
+  # Plot completeness
+  inext_plots[['completeness']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=2, 
+                                      color.var="site",
                                       se = F) +
     theme_bw(base_size = 18) +
     theme(legend.position="bottom",
           legend.box = "vertical") + 
     ggtitle(trap_type) 
-  ggsave(paste0('figures/inext_plots/', trap_type, '.pdf'), 
-         inext_plots[[trap_type]],
+  ggsave(paste0('figures/inext_plots/completeness_', trap_type, '.pdf'), 
+         inext_plots[['completeness']][[trap_type]],
          width = 8)
   
+  
+  # plot interpolation/extrapolation
+  inext_plots[['extrapolation']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=3, 
+                                                        color.var="site",
+                                                        se = F) +
+    theme_bw(base_size = 18) +
+    theme(legend.position="bottom",
+          legend.box = "vertical") + 
+    ylab("BIN diversity")+ 
+    ggtitle(trap_type) 
+  ggsave(paste0('figures/inext_plots/extrapolation_', trap_type, '.pdf'), 
+         inext_plots[['extrapolation']][[trap_type]],
+         width = 8)
 }
+# todo: make inext plots for number of sampling visits
+
+# grouping by the date-time start. Is this correct?
+visit_inext_tib <- too_many_cols %>%
+  filter(!is.na(bin)) %>%
+  rename(date =`Date Time End`) %>%
+  filter(!is.na(date)) %>%
+  select(bin, order, date) %>%
+  group_by_all() %>%
+  summarise(nsamples = n())
+
+n_dates <- visit_inext_tib %>%
+  pull(date) %>%
+  unique(.) %>%
+  length()
+
+visit_inext_list <- list()
+for(o in unique(visit_inext_tib$order)){
+  incidence_freq <- visit_inext_tib %>%
+    filter(order == o) %>%
+    group_by(bin) %>%
+    summarise(freq = n())%>%
+    pull(freq) %>%
+    sort(decreasing = T)
+  # if there are fewer than 15 unique BINs in this
+  # trap type , discard the order, otherwise save it for analysis
+  if(length(incidence_freq) >= 15){
+    visit_inext_list[[o]] <- c(n_dates, incidence_freq)
+  }
+  
+}
+
+visit_inext <- iNEXT(visit_inext_list, 
+      #q = c(0, 1, 2),
+      q = 0, # get 'species' richness 
+      datatype = 'incidence_freq',
+      size = round(seq(1,n_dates*4, by = n_dates/10)),
+      se=FALSE)
+
+visit_inext_plot <- ggiNEXT(visit_inext, type=2, 
+                            color.var="site",
+                            se = F) +
+  xlab('Number of visits') +
+  theme_bw(base_size = 18) +
+  theme(legend.position="bottom",
+        legend.box = "vertical")
+visit_inext_plot
+ggsave('figures/inext_plots/overall_visits.pdf', visit_inext_plot)
+# estimate of 'species' richness
+ChaoRichness(visit_inext_list, datatype = 'incidence_freq')
