@@ -49,7 +49,25 @@ with_unit_metadata <- bold_tidied %>%
   write_csv(file = 'data/processed_data/bold_and_earthcape/with_unit.csv')
 
 
-bold_tidied %>%
+with_locality_metadata <- bold_tidied %>%
   semi_join(locality_visits, by = c("field_id" = "Name")) %>%
   left_join(locality_visits, by = c("field_id" = "Name")) %>%
   write_csv(file = 'data/processed_data/bold_and_earthcape/with_locality.csv')
+
+
+# as the objects above have 236 and 340 columns respectively, and the majority
+# are redundant, lets trim them.
+
+reduced_units <- with_unit_metadata %>%
+  select(project_code,process_id,sample_id,field_id,bin,catalog_num,
+         coi_5p_seq_length,collection_date,identification,extra_info,
+         institution,notes,museum_id,institution_storing,phylum,class,order,
+         family,subfamily,tribe,genus,species,subspecies,identifier,
+         identifier_email,tissue_descriptor,collectors,exact_site,lat,lon,
+         gps_source,event_time,collection_notes,site_code,FullName,
+         TemporaryName,UnitType)
+
+
+with_unit_metadata %>% 
+  filter(grepl('Whole', UnitType)) %>%
+  write_csv(., file = 'temp_whole.csv')
