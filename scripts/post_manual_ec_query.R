@@ -280,3 +280,15 @@ visit_inext_plot
 ggsave('figures/inext_plots/overall_visits.pdf', visit_inext_plot)
 # estimate of 'species' richness
 ChaoRichness(visit_inext_list, datatype = 'incidence_freq')
+
+
+
+# the number of samples classed to BIN/ not classed to BIN
+
+samples_with_bins <- bold_organised %>% 
+  mutate(has_bin = !is.na(bin)) %>%
+  group_by(order, has_bin) %>%
+  summarise(n = n()) %>%
+  pivot_wider(names_from = has_bin, values_from = n, values_fill = 0)
+
+write_csv(samples_with_bins, 'results/samples_with_bins.csv')
