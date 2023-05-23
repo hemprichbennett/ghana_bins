@@ -206,7 +206,7 @@ for(trap_type in traptypes){
   
   # Plot completeness
   inext_plots[['completeness']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=2, 
-                                      color.var="site",
+                                      color.var="Assemblage",
                                       se = F) +
     theme_bw(base_size = 18) +
     theme(legend.position="bottom",
@@ -219,7 +219,7 @@ for(trap_type in traptypes){
   
   # plot interpolation/extrapolation
   inext_plots[['extrapolation']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=3, 
-                                                        color.var="site",
+                                                         color.var="Assemblage",
                                                         se = F) +
     theme_bw(base_size = 18) +
     theme(legend.position="bottom",
@@ -270,7 +270,7 @@ visit_inext <- iNEXT(visit_inext_list,
       se=FALSE)
 
 visit_inext_plot <- ggiNEXT(visit_inext, type=2, 
-                            color.var="site",
+                            color.var="Assemblage",
                             se = F) +
   xlab('Number of visits') +
   theme_bw(base_size = 18) +
