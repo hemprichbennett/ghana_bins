@@ -225,7 +225,7 @@ order_nsamples <- order_bin_frequencies %>%
 # get the names of the orders with 40 or more
 # samples
 to_inext <- order_nsamples %>%
-  filter(nsamples > 40) %>%
+  filter(nsamples > 50) %>%
   filter(!is.na(order)) %>%
   pull(order)
 
@@ -250,15 +250,15 @@ for(chosen_order in to_inext){
 
 # a basic iNEXT object with all items on a single plot
 abun_iNEXT <- iNEXT(abundance_list, datatype = 'abundance')
-basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
-  theme(legend.position = 'bottom') + 
-  ggtitle(paste('Samples with sequencing data available on', download_date))+
-  xlab(paste('Number of samples sequenced')) +
-  ylab("BIN richness") # CHECK THAT THIS IS DEFINITELY WHAT IT SHOWS
-
-basic_gginext
-ggsave('figures/basic_gginext.jpeg', basic_gginext,
-       width = 12)
+# basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
+#   theme(legend.position = 'bottom') + 
+#   ggtitle(paste('Samples with sequencing data available on', download_date))+
+#   xlab(paste('Number of samples sequenced')) +
+#   ylab("BIN richness") # CHECK THAT THIS IS DEFINITELY WHAT IT SHOWS
+# 
+# basic_gginext
+# ggsave('figures/basic_gginext.jpeg', basic_gginext,
+#        width = 12)
 
 
 # now, we throw the kitchen sink at the dataset
