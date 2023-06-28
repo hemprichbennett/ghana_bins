@@ -22,9 +22,14 @@ country_rankings <- our_big_df %>%
   slice(1:20)
 
 
+outdir <- 'data/processed_data/bold_queries'
+if(!dir.exists(outdir)){
+  dir.create(outdir)
+}
 
 country_list <- list()
 for(chosen_country in country_rankings$country){
   print(chosen_country)
   country_list[[chosen_country]] <- bold_seqspec(geo = chosen_country)
+  write_csv(country_list[[chosen_country]], paste0(outdir, '/', chosen_country, '.csv'))
 }
