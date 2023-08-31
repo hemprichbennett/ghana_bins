@@ -23,13 +23,30 @@ country_rankings <- our_big_df %>%
 
 
 outdir <- 'data/processed_data/bold_queries'
+if(dir.exists(outdir)){
+  queried <- list.files(outdir, full.names = T) %>%
+    file.info(extra_cols = F) %>%
+    mutate(country = gsub('.+\\/|\\..+', '', rownames(.))) %>%
+    # make a column stating if a file was created in the last
+    # 10 days
+    mutate(recently_queried = 
+             difftime(Sys.time(), queried$mtime, units = "days") < 10)
+  exclude_from_query <- queried %>%
+    filter(recently_queried == T) %>%
+    pull(country)
+}
 if(!dir.exists(outdir)){
   dir.create(outdir)
 }
 
+
 country_list <- list()
 for(chosen_country in country_rankings$country){
   print(chosen_country)
+  if(chosen_country %in% exclude_from_query){
+    cat(chosen_country, ' has already been queried recently. Skipping\n')
+    next()
+  }
   country_list[[chosen_country]] <- bold_seqspec(geo = chosen_country)
   write_csv(country_list[[chosen_country]], paste0(outdir, '/', chosen_country, '.csv'))
 }
