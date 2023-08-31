@@ -30,7 +30,7 @@ if(dir.exists(outdir)){
     # make a column stating if a file was created in the last
     # 10 days
     mutate(recently_queried = 
-             difftime(Sys.time(), queried$mtime, units = "days") < 10)
+             difftime(Sys.time(), mtime, units = "days") < 10)
   exclude_from_query <- queried %>%
     filter(recently_queried == T) %>%
     pull(country)
