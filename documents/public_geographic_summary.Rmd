@@ -22,8 +22,13 @@ our_big_df <- read_csv(here('data', 'processed_data', 'bold_public_bin_matches.c
          !is.na(order_name))
 
 
+
+download_date <- file.info(here('data', 'raw_data','GCEP','bold.xlsx'))$ctime %>% 
+  ymd_hms() %>%
+  format(., "%d %B %Y")
+
 ```
-This is a summary of the public data matching our BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 05/04/2022.  
+This is a summary of the public data matching our BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on `r download_date`.  
 
 There were ```r our_big_df %>% select(bin_uri) %>% distinct() %>% nrow()``` distinct BINs in our project which are also found publicly on BOLD. Those BINs are found across ```r our_big_df %>% select(country) %>% distinct() %>% nrow()``` countries in ```r our_big_df %>% select(geographic_region) %>% distinct() %>% nrow()``` geographic regions, as shown below:
 
