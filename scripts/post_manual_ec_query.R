@@ -189,9 +189,12 @@ for(trap_type in traptypes){
       summarise(freq = n())%>%
       pull(freq) %>%
       sort(decreasing = T)
-    # if there are fewer than ten unique BINs in this
+    
+    nbin_threshold <- 30
+    # if there are fewer than nbin_threshold unique BINs in this
     # trap type , discard the order, otherwise save it for analysis
-    if(length(incidence_freq) >= 15){
+    
+    if(length(incidence_freq) >= nbin_threshold){
       for_inext_list[[trap_type]][[o]] <- c(n_events, incidence_freq)
     }
     
