@@ -263,71 +263,68 @@ for(trap_type in traptypes){
 
 # Big iNEXT plots ---------------------------------------------------------
 
+
+big_inext_plotting <- function(input_list, inext_type){
+  inext_tib <- map(input_list, function(x) fortify(x,type=inext_type)) %>% 
+    bind_rows(.id = 'trap_type') %>%
+    # reverse the factors in the 'Method' column, as their default alphabetical
+    # order makes the plot legend confusing
+    mutate(Method = fct(Method, 
+                        levels = c('Observed', 'Rarefaction', 'Extrapolation')),
+           # capitalise the trap types
+           trap_type = str_to_title(trap_type))
+  
+  if(inext_type == 1){
+    yaxis_text <- 'Number of BINs'
+  }else if(
+    inext_type ==2
+  ){
+    yaxis_text <- 'Sample coverage'
+  }
+  
+  
+  inext_plot <- ggplot(inext_tib, aes(x = x, y = y
+  ))+
+    geom_line(data = filter(inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
+              mapping = aes(linetype=Method))+
+    geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
+    geom_point(data = filter(inext_tib, Method == 'Observed'),
+               mapping = aes(x = x, y = y))+
+    facet_grid(Assemblage ~trap_type, 
+               scales = 'free')+
+    theme_bw()+
+    theme(legend.position = 'bottom')+
+    labs(x = 'Number of traps', y = yaxis_text)
+  
+  
+  return(inext_plot)
+  
+}
 ## make a function of this, there's a silly amount of redundancy atm
 
-# make a big tibble of all the inext data from above
-type1_inext_tib <- map(inext_objs, function(x) fortify(x,type=1)) %>% 
-  bind_rows(.id = 'trap_type') %>%
-  # reverse the factors in the 'Method' column, as their default alphabetical
-  # order makes the plot legend confusing
-  mutate(Method = fct(Method, 
-                      levels = c('Observed', 'Rarefaction', 'Extrapolation')),
-         # capitalise the trap types
-         trap_type = str_to_title(trap_type))
+type1_inext_plot <- big_inext_plotting(input_list = inext_objs,
+                                       inext_type = 1)
 
-
-type1_inext_plot <- ggplot(type1_inext_tib, aes(x = x, y = y
-                                                       ))+
-  geom_line(data = filter(type1_inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
-              mapping = aes(linetype=Method))+
-  geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
-  geom_point(data = filter(type1_inext_tib, Method == 'Observed'),
-             mapping = aes(x = x, y = y))+
-  facet_grid(Assemblage ~trap_type, 
-                            scales = 'free')+
-  theme_bw()+
-  theme(legend.position = 'bottom')+
-  labs(x = 'Number of traps', y = 'Number of BINs')
-
-
-type1_inext_plot
 ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
        type1_inext_plot,
        height = 15)
 
-# make a big tibble of all the inext data from above
-type2_inext_tib <- map(inext_objs, function(x) fortify(x,type=2)) %>% 
-  bind_rows(.id = 'trap_type') %>%
-  # reverse the factors in the 'Method' column, as their default alphabetical
-  # order makes the plot legend confusing
-  mutate(Method = fct(Method, 
-                      levels = c('Observed', 'Rarefaction', 'Extrapolation')),
-         # capitalise the trap types
-         trap_type = str_to_title(trap_type))
+type1_inext_plot <- big_inext_plotting(input_list = inext_objs,
+                                       inext_type = 1)
 
+ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
+       type1_inext_plot,
+       height = 15)
 
-type2_inext_plot <- ggplot(type2_inext_tib, aes(x = x, y = y
-))+
-  geom_line(data = filter(type2_inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
-            mapping = aes(linetype=Method))+
-  geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
-  geom_point(data = filter(type2_inext_tib, Method == 'Observed'),
-             mapping = aes(x = x, y = y))+
-  facet_grid(Assemblage ~trap_type, 
-             scales = 'free')+
-  theme_bw()+
-  theme(legend.position = 'bottom')+
-  labs(x = 'Number of traps', y = 'Sample coverage')
-
-
-type2_inext_plot
+type2_inext_plot <- big_inext_plotting(input_list = inext_objs,
+                                       inext_type = 2)
 ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.pdf'),
        type2_inext_plot,
        height = 15)
 
 
 
-R
+
 
 # Further stuff -----------------------------------------------------------
 
