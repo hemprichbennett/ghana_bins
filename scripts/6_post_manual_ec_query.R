@@ -41,6 +41,23 @@ str(ec_individuals)
 str(ec_transects)
 str(ec_lots)
 
+cat(ec_individuals %>% filter(is.na(Lot)) %>% nrow(), 
+    'rows of ec_individuals have NA values!')
+
+duplicate_transects <- ec_transects %>% 
+  group_by(Name) %>% 
+  summarise(n = n()) %>% 
+  filter(n >1 ) %>% 
+  pull(Name)
+  
+cat("Transects", duplicate_transects, 'all have multiple rows!')
+
+ec_transects <- ec_transects %>%
+  filter(!Name %in% duplicate_transects)
+
+ec_individuals <- ec_individuals %>%
+  filter(!is.na(Lot))
+
 for_individuals <- ec_individuals %>%
   left_join(ec_lots, by = c("Lot" = "Lot ID")) %>%
   left_join(ec_transects, by = c("Transect" = "Name")) %>%
@@ -64,19 +81,21 @@ transect_referenced <- ec_referenced %>%
                                   "sampling_protocol" = "Type"))
 
 
+trap_transect_countrs <- for_transects %>% 
+  group_by(Type, Transect) %>% 
+  summarise(n = n())
 
-
-# we have a problem: bold seem to have named the field id by our transects,
+# we had a problem that bold seemed to have named the field id by our transects,
 # but each transect has multiple individual sampling events on it. These
-# samples all seem to be from heath traps, however
+# samples were all from heath traps, however
 
 
 n_heaths <- for_transects %>% 
   filter(Type == 'heath') %>% 
   group_by(Transect) %>% 
   summarise(n = n())
-# we can work around this though, as there was only two recorded instances of
-# a transect having two heath traps
+
+# get recorded instances of multiple heath traps per-transect
 
 duplicate_heaths <- for_transects %>%
   filter(Type == 'heath') %>%
@@ -85,6 +104,7 @@ duplicate_heaths <- for_transects %>%
   filter(n_heaths >1) %>%
   pull(Transect)
 
+# if there are any duplicate heath traps, remove them
 
 for_transects <- for_transects %>%
   # remove those for now, they can't be trusted
@@ -141,7 +161,7 @@ too_many_cols %>%
   summarise(nsamples = n()) %>%
   ggplot(., aes(x = order, y = nsamples)) +
   geom_boxplot() +
-  facet_wrap(.~ Type)
+  facet_wrap(.~ Type, scales = 'free')
 
 
 tib_for_inext <- too_many_cols %>%
