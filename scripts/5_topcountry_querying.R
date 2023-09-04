@@ -47,6 +47,7 @@ for(chosen_country in country_rankings$country){
     cat(chosen_country, ' has already been queried recently. Skipping\n')
     next()
   }
+  cat('--------------------------\nTime is ', as.character(lubridate::now()), '\n', 'querying ', chosen_country, sep = '')
   country_list[[chosen_country]] <- bold_seqspec(geo = chosen_country)
   write_csv(country_list[[chosen_country]], paste0(outdir, '/', chosen_country, '.csv'))
 }
