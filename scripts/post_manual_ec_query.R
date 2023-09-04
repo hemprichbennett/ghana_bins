@@ -151,7 +151,7 @@ tib_for_inext <- too_many_cols %>%
   summarise(nsamples = n())
 
 # only work on orders with at least the below number of bins
-nbin_threshold <- 20
+nbin_threshold <- 30
 
 desired_orders <- tib_for_inext %>%
   filter(!is.na(order)) %>%
@@ -276,6 +276,8 @@ visit_inext_plot <- ggiNEXT(visit_inext, type=2,
                             color.var="Assemblage",
                             se = F) +
   xlab('Number of visits') +
+  scale_colour_viridis_d()+
+  facet_wrap(.~ Assemblage)+
   theme_bw(base_size = 18) +
   theme(legend.position="bottom",
         legend.box = "vertical")
