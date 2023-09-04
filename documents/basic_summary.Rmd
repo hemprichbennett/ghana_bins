@@ -12,9 +12,14 @@ knitr::opts_chunk$set(echo = F, message = F, warning = F)
 library(tidyverse)
 library(here)
 our_big_df <- read_csv(here('data', 'processed_data', 'our_organised_bold_data.csv'))
+
+download_date <- file.info(here('data', 'raw_data','GCEP','bold.xlsx'))$ctime %>% 
+  ymd_hms() %>%
+  format(., "%d %B %Y")
+
 ```
 
-This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on 20/10/2022. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
+This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on `r download_date`. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
   
   
 We have the following numbers of samples and BINs in each project:  
