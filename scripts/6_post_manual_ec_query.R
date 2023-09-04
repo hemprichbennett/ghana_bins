@@ -1,5 +1,6 @@
 library(tidyverse)
 library(iNEXT)
+library(here)
 
 ec_individuals <- read_csv('data/earthcape_app_query/Individuals.csv')
 ec_lots <- read_csv('data/earthcape_app_query/Lots.csv') %>%
@@ -171,7 +172,7 @@ tib_for_inext <- too_many_cols %>%
   summarise(nsamples = n())
 
 # only work on orders with at least the below number of bins
-nbin_threshold <- 30
+nbin_threshold <- 20
 
 desired_orders <- tib_for_inext %>%
   filter(!is.na(order)) %>%
@@ -222,9 +223,12 @@ for(trap_type in traptypes){
   inext_objs[[trap_type]] <- iNEXT(for_inext_list[[trap_type]], 
                                   #q = c(0, 1, 2),
                                   q = 0, # get 'species' richness 
+                                  # this is incidence_freq: we're analysing a dataset 
+                                  # of how often a given BIN is detected at least once in 
+                                  # a sample, not the number of occurrences of that BIN
                       datatype = 'incidence_freq',
                       size = round(seq(1,n_events*4, by = n_events/10)),
-                      se=FALSE)
+                      se=T)
   
   
   # Plot completeness
@@ -254,6 +258,36 @@ for(trap_type in traptypes){
          width = 8)
 }
 # todo: make inext plots for number of sampling visits
+
+# make a big tibble of all the inext data from above
+big_inext_tib <- map(inext_objs, fortify) %>% 
+  bind_rows(.id = 'trap_type') %>%
+  # reverse the factors in the 'Method' column, as their default alphabetical
+  # order makes the plot legend confusing
+  mutate(Method = fct(Method, 
+                      levels = c('Observed', 'Rarefaction', 'Extrapolation')),
+         # capitalise the trap types
+         trap_type = str_to_title(trap_type))
+
+
+bin_accumulation_facetted <- ggplot(big_inext_tib, aes(x = x, y = y
+                                                       ))+
+  geom_line(data = filter(big_inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
+              mapping = aes(linetype=Method))+
+  geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
+  geom_point(data = filter(big_inext_tib, Method == 'Observed'),
+             mapping = aes(x = x, y = y))+
+  facet_grid(Assemblage ~trap_type, 
+                            scales = 'free')+
+  theme_bw()+
+  theme(legend.position = 'bottom')+
+  labs(x = 'Number of traps', y = 'Number of BINs')
+
+
+bin_accumulation_facetted
+ggsave(filename = here('figures', 'inext_plots', 'alltaxa_extrapolation.pdf'),
+       bin_accumulation_facetted,
+       height = 15)
 
 # grouping by the date-time start. Is this correct?
 visit_inext_tib <- too_many_cols %>%
@@ -317,3 +351,11 @@ samples_with_bins <- bold_organised %>%
   pivot_wider(names_from = has_bin, values_from = n, values_fill = 0)
 
 write_csv(samples_with_bins, 'results/samples_with_bins.csv')
+
+
+
+# attempt an NMDS
+for_nmds <- tib_for_inext %>%
+  ungroup() %>%
+  select(Type, bin, nsamples) #%>%
+  pivot_wider(names_from = bin, values_from = nsamples)
