@@ -172,7 +172,7 @@ tib_for_inext <- too_many_cols %>%
   summarise(nsamples = n())
 
 # only work on orders with at least the below number of bins
-nbin_threshold <- 20
+nbin_threshold <- 5
 
 desired_orders <- tib_for_inext %>%
   filter(!is.na(order)) %>%
@@ -259,8 +259,14 @@ for(trap_type in traptypes){
 }
 # todo: make inext plots for number of sampling visits
 
+
+
+# Big iNEXT plots ---------------------------------------------------------
+
+## make a function of this, there's a silly amount of redundancy atm
+
 # make a big tibble of all the inext data from above
-big_inext_tib <- map(inext_objs, fortify) %>% 
+type1_inext_tib <- map(inext_objs, function(x) fortify(x,type=1)) %>% 
   bind_rows(.id = 'trap_type') %>%
   # reverse the factors in the 'Method' column, as their default alphabetical
   # order makes the plot legend confusing
@@ -270,12 +276,12 @@ big_inext_tib <- map(inext_objs, fortify) %>%
          trap_type = str_to_title(trap_type))
 
 
-bin_accumulation_facetted <- ggplot(big_inext_tib, aes(x = x, y = y
+type1_inext_plot <- ggplot(type1_inext_tib, aes(x = x, y = y
                                                        ))+
-  geom_line(data = filter(big_inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
+  geom_line(data = filter(type1_inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
               mapping = aes(linetype=Method))+
   geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
-  geom_point(data = filter(big_inext_tib, Method == 'Observed'),
+  geom_point(data = filter(type1_inext_tib, Method == 'Observed'),
              mapping = aes(x = x, y = y))+
   facet_grid(Assemblage ~trap_type, 
                             scales = 'free')+
@@ -284,10 +290,48 @@ bin_accumulation_facetted <- ggplot(big_inext_tib, aes(x = x, y = y
   labs(x = 'Number of traps', y = 'Number of BINs')
 
 
-bin_accumulation_facetted
-ggsave(filename = here('figures', 'inext_plots', 'alltaxa_extrapolation.pdf'),
-       bin_accumulation_facetted,
+type1_inext_plot
+ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
+       type1_inext_plot,
        height = 15)
+
+# make a big tibble of all the inext data from above
+type2_inext_tib <- map(inext_objs, function(x) fortify(x,type=2)) %>% 
+  bind_rows(.id = 'trap_type') %>%
+  # reverse the factors in the 'Method' column, as their default alphabetical
+  # order makes the plot legend confusing
+  mutate(Method = fct(Method, 
+                      levels = c('Observed', 'Rarefaction', 'Extrapolation')),
+         # capitalise the trap types
+         trap_type = str_to_title(trap_type))
+
+
+type2_inext_plot <- ggplot(type2_inext_tib, aes(x = x, y = y
+))+
+  geom_line(data = filter(type2_inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
+            mapping = aes(linetype=Method))+
+  geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
+  geom_point(data = filter(type2_inext_tib, Method == 'Observed'),
+             mapping = aes(x = x, y = y))+
+  facet_grid(Assemblage ~trap_type, 
+             scales = 'free')+
+  theme_bw()+
+  theme(legend.position = 'bottom')+
+  labs(x = 'Number of traps', y = 'Sample coverage')
+
+
+type2_inext_plot
+ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.pdf'),
+       type2_inext_plot,
+       height = 15)
+
+
+
+R
+
+# Further stuff -----------------------------------------------------------
+
+
 
 # grouping by the date-time start. Is this correct?
 visit_inext_tib <- too_many_cols %>%
