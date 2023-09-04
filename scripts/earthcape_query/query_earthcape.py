@@ -12,11 +12,11 @@ conn = pymssql.connect(server=params.server, user=params.user,
 desired_queries=['Unit', 'DNAextract', 'LocalityVisit']
 
 # brief override to get all items
-# cursor = conn.cursor()
-# desired_queries=[]
-# cursor.execute("SELECT name FROM SYSOBJECTS WHERE xtype = 'U'")
-# for row in cursor:
-#     desired_queries.append(row[0])
+cursor = conn.cursor()
+desired_queries=[]
+cursor.execute("SELECT name FROM SYSOBJECTS WHERE xtype = 'U'")
+for row in cursor:
+    desired_queries.append(row[0])
 
 for field in desired_queries:
     print(field)
@@ -25,7 +25,7 @@ for field in desired_queries:
     # check to see if the df contains anything (has a size greater than zero)
     if df.size > 0:
         # write the file
-        df.to_csv('data/earthcape_query/' + field + '.csv',
+        df.to_csv('../../data/earthcape_query/' + field + '.csv',
         # no row numbers pls
         index=False
         )
