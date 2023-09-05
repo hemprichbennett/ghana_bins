@@ -1,6 +1,7 @@
 library(tidyverse)
 library(iNEXT)
 library(here)
+library(vegan)
 
 ec_individuals <- read_csv('data/earthcape_app_query/Individuals.csv')
 ec_lots <- read_csv('data/earthcape_app_query/Lots.csv') %>%
@@ -111,7 +112,7 @@ for_transects <- for_transects %>%
   # remove those for now, they can't be trusted
   filter(!Transect %in% duplicate_heaths)
 
-# Combine with the ec data ------------------------------------------------
+# Combine bold data with the ec data ------------------------------------------------
 
 
 
@@ -151,13 +152,14 @@ too_many_cols <- too_many_cols %>%
     is.na(Type) & sampling_protocol == "heath",
     sampling_protocol,
     Type
-  ))
+  ),
+  Type = str_to_title(Type))
 
 
 
 # make a very basic summary plot
 too_many_cols %>%
-  filter(!is.na(order)) %>%
+  filter(!is.na(order) & !is.na(Type)) %>%
   group_by(order, sampling_event, Type) %>%
   summarise(nsamples = n()) %>%
   ggplot(., aes(x = order, y = nsamples)) +
@@ -257,7 +259,7 @@ for(trap_type in traptypes){
          inext_plots[['extrapolation']][[trap_type]],
          width = 8)
 }
-# todo: make inext plots for number of sampling visits
+
 
 
 
@@ -394,9 +396,45 @@ samples_with_bins <- bold_organised %>%
 write_csv(samples_with_bins, 'results/samples_with_bins.csv')
 
 
+# NMDS time ---------------------------------------------------------------
 
-# attempt an NMDS
-for_nmds <- tib_for_inext %>%
-  ungroup() %>%
-  select(Type, bin, nsamples) #%>%
-  pivot_wider(names_from = bin, values_from = nsamples)
+nmds_input_generator <- function(taxa_grouping, min_threshold = NA){
+  acceptable_groupings <- c('order', 'family', 'genus', 'bin') 
+  if(!taxa_grouping %in% acceptable_groupings){
+    stop(cat('Error, ', taxa_grouping, 'is not in the list of accepted grouping levels (',
+             acceptable_groupings,')\n'))
+  }
+  if(!is.numeric(min_threshold) & !is.na(min_threshold)){
+    stop('min_threshold should either be blank, NA, or numeric')
+  }
+  # generate the output matrix
+  out_mat <- too_many_cols %>%
+    select(taxa_grouping, bin, Type) %>%
+    filter_all(all_vars(!is.na(.))) %>%
+    select(taxa_grouping, Type) %>%
+    group_by_all() %>%
+    summarise(abundance = n()) %>%
+    ungroup() %>%
+    pivot_wider(names_from = taxa_grouping, values_from = abundance,
+                # fill missing values with 0, not the default of NA
+                values_fill = 0) %>%
+    column_to_rownames(var="Type") %>%
+    as.matrix(.)
+  
+
+  # if a minimum threshold of abundance for taxa_grouping was specified, 
+  # remove columns whose sums are less than it
+  if(is.numeric(min_threshold)){
+    badcols <- which(colSums(out_mat) < min_threshold)
+    out_mat <- out_mat[,-badcols]
+  }
+      
+  return(out_mat)
+}
+
+
+family_nmds_dataset <- nmds_input_generator('family', min_threshold = 10)
+
+
+big_nmds <- metaMDS(family_nmds_dataset, # Our community-by-species matrix
+                                 k=2) # The number of reduced dimensions. Increase if high stress is problem. 
