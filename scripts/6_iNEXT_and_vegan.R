@@ -7,13 +7,19 @@ library(here)
 library(vegan)
 
 
-ec_individuals <- read_csv('data/earthcape_app_query/Individuals.csv')
-ec_lots <- read_csv('data/earthcape_app_query/Lots.csv') %>%
-  mutate(Type = tolower(Type))
-ec_transects <- read_csv('data/earthcape_app_query/Transects.csv')
-ec_units <- read_csv('data/earthcape_app_query/Units.csv')
+ec_individuals <- read_csv(
+  here('data', 'earthcape_app_query', 'Individuals.csv'))
 
-bold_organised <- read_csv('data/processed_data/our_organised_bold_data.csv') %>%
+ec_lots <- read_csv(
+  here('data', 'earthcape_app_query', 'Lots.csv')) %>%
+  mutate(Type = tolower(Type))
+ec_transects <- read_csv(
+  here('data', 'earthcape_app_query', 'Transects.csv'))
+ec_units <- read_csv(
+  here('data', 'earthcape_app_query', 'Units.csv'))
+
+bold_organised <- read_csv(
+  here('data', 'processed_data', 'our_organised_bold_data.csv')) %>%
   mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol))
 
 str(bold_organised)
@@ -248,7 +254,8 @@ for(trap_type in traptypes){
     theme(legend.position="bottom",
           legend.box = "vertical") + 
     ggtitle(trap_type) 
-  ggsave(paste0('figures/inext_plots/completeness_', trap_type, '.pdf'), 
+  ggsave(here('figures', 'inext_plots', 
+              paste0('completeness_', trap_type, '.pdf')),
          inext_plots[['completeness']][[trap_type]],
          width = 8)
   
@@ -262,7 +269,8 @@ for(trap_type in traptypes){
           legend.box = "vertical") + 
     ylab("BIN diversity")+ 
     ggtitle(trap_type) 
-  ggsave(paste0('figures/inext_plots/extrapolation_', trap_type, '.pdf'), 
+  ggsave(here('figures', 'inext_plots', 
+              paste0('extrapolation_', trap_type, '.pdf')),
          inext_plots[['extrapolation']][[trap_type]],
          width = 8)
 }
@@ -309,7 +317,6 @@ big_inext_plotting <- function(input_list, inext_type){
   return(inext_plot)
   
 }
-## make a function of this, there's a silly amount of redundancy atm
 
 type1_inext_plot <- big_inext_plotting(input_list = inext_objs,
                                        inext_type = 1)
@@ -386,7 +393,7 @@ visit_inext_plot <- ggiNEXT(visit_inext, type=2,
   theme(legend.position="bottom",
         legend.box = "vertical")
 visit_inext_plot
-ggsave('figures/inext_plots/overall_visits.pdf', visit_inext_plot)
+ggsave(here('figures', 'inext_plots', 'overall_visits.pdf'), visit_inext_plot)
 # estimate of 'species' richness
 ChaoRichness(visit_inext_list, datatype = 'incidence_freq')
 
@@ -400,7 +407,8 @@ samples_with_bins <- bold_organised %>%
   summarise(n = n()) %>%
   pivot_wider(names_from = has_bin, values_from = n, values_fill = 0)
 
-write_csv(samples_with_bins, 'results/samples_with_bins.csv')
+write_csv(samples_with_bins, 
+          here('results', 'samples_with_bins.csv'))
 
 
 # NMDS time ---------------------------------------------------------------
