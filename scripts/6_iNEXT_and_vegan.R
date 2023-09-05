@@ -198,7 +198,7 @@ desired_orders <- tib_for_inext %>%
 
 traptypes <- tib_for_inext %>%
   filter(!is.na(Type)) %>%
-  filter(Type != 'cdc') %>%
+  filter(Type != 'Cdc') %>%
   pull(Type) %>%
   unique()
 for_inext_list <- list()
@@ -453,3 +453,4 @@ family_nmds_dataset <- nmds_input_generator('family', min_threshold = 10)
 
 big_nmds <- metaMDS(family_nmds_dataset, # Our community-by-species matrix
                                  k=2) # The number of reduced dimensions. Increase if high stress is problem. 
+
