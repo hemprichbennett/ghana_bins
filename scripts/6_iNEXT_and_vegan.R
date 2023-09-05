@@ -1,7 +1,11 @@
+# this script, for the first time in the workflow, incorporates data from 
+# earthcape as well as from BOLD.
+
 library(tidyverse)
 library(iNEXT)
 library(here)
 library(vegan)
+
 
 ec_individuals <- read_csv('data/earthcape_app_query/Individuals.csv')
 ec_lots <- read_csv('data/earthcape_app_query/Lots.csv') %>%
@@ -155,7 +159,10 @@ too_many_cols <- too_many_cols %>%
   ),
   Type = str_to_title(Type))
 
-
+# Save the huge df for reuse in further scripts
+write_csv(too_many_cols, 
+          file = here('data', 'processed_data', 
+                      'bold_and_earthcape_combined.csv'))
 
 # make a very basic summary plot
 too_many_cols %>%
