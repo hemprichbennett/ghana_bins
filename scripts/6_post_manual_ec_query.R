@@ -82,7 +82,7 @@ transect_referenced <- ec_referenced %>%
                                   "sampling_protocol" = "Type"))
 
 
-trap_transect_countrs <- for_transects %>% 
+trap_transect_counts <- for_transects %>% 
   group_by(Type, Transect) %>% 
   summarise(n = n())
 
