@@ -1,0 +1,67 @@
+---
+title: "Ghana BINs draft manuscript"
+affiliations:
+  - id: UoO
+    name: University of Oxford Department of Biology
+  - id: UoG
+    name: University of Ghana
+author: 
+  - name: 
+      given: David 
+      family: Hemprich-Bennett
+    affiliation: 
+      - ref: UoO
+  - name: 
+      given: Abigail
+      family: Bailey
+    affiliation: 
+      - ref: UoO
+  - name: 
+      given: Fred
+      family: Aboagye-Antwi
+    affiliation: 
+      - ref: UoG
+  - name: 
+      given: Talya
+      family: Hackett
+    affiliation: 
+      - ref: UoO
+  - name: 
+      given: Charles
+      family: Godfray
+    affiliation: 
+      - ref: UoO
+  - name: 
+      given: Owen
+      family: Lewis
+    affiliation: 
+      - ref: UoO
+format: 
+  pdf: default
+  plos-pdf:
+    keep-tex: true    
+editor: visual
+date: "`r Sys.Date()`"
+date-format: medium
+execute:
+  echo: false
+  warning: false
+---
+
+## 
+
+# Abstract
+
+# Introduction
+
+# Methods
+
+# Results
+
+# Discussion
+
+# Conclusion
+
+# Supporting information
+
+# Acknowledgements
