@@ -395,9 +395,12 @@ visit_inext_plot <- ggiNEXT(visit_inext, type=2,
 visit_inext_plot
 ggsave(here('figures', 'inext_plots', 'overall_visits.pdf'), visit_inext_plot)
 # estimate of 'species' richness
-ChaoRichness(visit_inext_list, datatype = 'incidence_freq')
+overall_chaorichness <- ChaoRichness(visit_inext_list, 
+                                     datatype = 'incidence_freq') %>%
+  mutate(percent_completeness = Observed / Estimator * 100)
 
-
+write_csv(overall_chaorichness,
+          file = here('results', 'overall_chaorichness.csv'))
 
 # the number of samples classed to BIN/ not classed to BIN
 
