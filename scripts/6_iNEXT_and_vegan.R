@@ -6,33 +6,41 @@ library(iNEXT)
 library(here)
 library(vegan)
 
+source(here('parameters.R'))
 
 ec_individuals <- read_csv(
-  here('data', 'earthcape_app_query', 'Individuals.csv'))
+  here('data', 'earthcape_app_query', 'Individuals.csv')) %>%
+  janitor::clean_names()
 
 ec_lots <- read_csv(
   here('data', 'earthcape_app_query', 'Lots.csv')) %>%
-  mutate(Type = tolower(Type))
+  mutate(Type = tolower(Type)) %>%
+  janitor::clean_names()
+
 ec_transects <- read_csv(
-  here('data', 'earthcape_app_query', 'Transects.csv'))
-ec_units <- read_csv(
-  here('data', 'earthcape_app_query', 'Units.csv'))
+  here('data', 'earthcape_app_query', 'Transects.csv'))%>%
+  janitor::clean_names()
 
 bold_organised <- read_csv(
   here('data', 'processed_data', 'our_organised_bold_data.csv')) %>%
-  mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol))
+  mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol)) %>%
+  janitor::clean_names()
 
 str(bold_organised)
 unique(bold_organised$field_id)
-bold_organised$field_id %in% ec_individuals$`Unit ID`
+bold_organised$field_id %in% ec_individuals$unit_id
 
+# make a dataframe with a column saying if the field_id value was found in
+# individuals or transects
 ec_referenced <- bold_organised %>%
-  mutate(in_individuals = field_id %in% ec_individuals$`Unit ID`,
-         in_transects = field_id %in% ec_transects$Name)
+  mutate(in_individuals = field_id %in% ec_individuals$unit_id,
+         in_transects = field_id %in% ec_transects$name)
 
+# make a dataframe just containing samples that were missing
 unmatched <- ec_referenced %>%
   filter(in_individuals == F & in_transects == F)
 
+# now a dataframe containing samples that matched both earthcape export-types
 duplicate_matches <- ec_referenced %>%
   filter(in_individuals == T & in_transects == T)
 
@@ -53,48 +61,53 @@ str(ec_individuals)
 str(ec_transects)
 str(ec_lots)
 
-cat(ec_individuals %>% filter(is.na(Lot)) %>% nrow(), 
+cat(ec_individuals %>% filter(is.na(lot)) %>% nrow(), 
     'rows of ec_individuals have NA values!')
 
 duplicate_transects <- ec_transects %>% 
-  group_by(Name) %>% 
+  group_by(name) %>% 
   summarise(n = n()) %>% 
   filter(n >1 ) %>% 
-  pull(Name)
+  pull(name)
   
 cat("Transects", duplicate_transects, 'all have multiple rows!')
 
 ec_transects <- ec_transects %>%
-  filter(!Name %in% duplicate_transects)
+  filter(!name %in% duplicate_transects)
 
 ec_individuals <- ec_individuals %>%
-  filter(!is.na(Lot))
+  filter(!is.na(lot))
+
+# The transects AND lots have date stamps and GPS coordinates, as there are 
+# multiple 'lots' per-transect. A transect is a set point from A to B, but 
+# there were multiple 'lots' (traps) set up along each. 
+
 
 for_individuals <- ec_individuals %>%
-  left_join(ec_lots, by = c("Lot" = "Lot ID")) %>%
-  left_join(ec_transects, by = c("Transect" = "Name")) %>%
-  select(Lot, `Unit ID`, Transect, Latitude.y, Longitude.y,
-         `Date Time Start`, `Date Time End`, Direction, Locality, Type)
+  left_join(ec_lots, by = c("lot" = "lot_id")) %>%
+  left_join(ec_transects, by = c("transect" = "name")) %>%
+  select(lot, unit_id, transect, latitude.x, longitude.x,
+         date_time_start.x, date_time_end, direction.x, locality.x, type)
 
 for_transects <- ec_lots %>%
-  rename(Lot = `Lot ID`) %>%
-  left_join(ec_transects, by = c("Transect" = "Name")) %>%
-  select(Lot, Transect, Latitude.y, Longitude.y,
-         `Date Time Start`, `Date Time End`, Direction, Locality, Type)
+  rename(lot = lot_id) %>%
+  left_join(ec_transects, by = c("transect" = "name")) %>%
+  select(lot, transect, latitude.y, longitude.y,
+         date_time_start.x, date_time_end, direction.x, locality.x, type)
 
 
 individual_referenced <- ec_referenced %>%
   filter(in_individuals == T) %>%
-  left_join(for_individuals, by = c("field_id" = "Unit ID"))
+  left_join(for_individuals, by = c("field_id" = "unit_id"))
 
 transect_referenced <- ec_referenced %>%
   filter(in_transects == T) %>%
-  left_join(for_transects, by = c("field_id" = "Transect", 
-                                  "sampling_protocol" = "Type"))
+  left_join(for_transects, by = c("field_id" = "transect", 
+                                  "sampling_protocol" = "type"))
 
 
 trap_transect_counts <- for_transects %>% 
-  group_by(Type, Transect) %>% 
+  group_by(type, transect) %>% 
   summarise(n = n())
 
 # we had a problem that bold seemed to have named the field id by our transects,
@@ -103,24 +116,24 @@ trap_transect_counts <- for_transects %>%
 
 
 n_heaths <- for_transects %>% 
-  filter(Type == 'heath') %>% 
-  group_by(Transect) %>% 
+  filter(type == 'heath') %>% 
+  group_by(transect) %>% 
   summarise(n = n())
 
 # get recorded instances of multiple heath traps per-transect
 
 duplicate_heaths <- for_transects %>%
-  filter(Type == 'heath') %>%
-  group_by(Transect) %>%
+  filter(type == 'heath') %>%
+  group_by(transect) %>%
   summarise(n_heaths = n()) %>%
   filter(n_heaths >1) %>%
-  pull(Transect)
+  pull(transect)
 
 # if there are any duplicate heath traps, remove them
 
 for_transects <- for_transects %>%
   # remove those for now, they can't be trusted
-  filter(!Transect %in% duplicate_heaths)
+  filter(!transect %in% duplicate_heaths)
 
 # Combine bold data with the ec data ------------------------------------------------
 
@@ -128,13 +141,13 @@ for_transects <- for_transects %>%
 
 individual_referenced <- ec_referenced %>%
   filter(in_individuals == T) %>%
-  left_join(for_individuals, by = c("field_id" = "Unit ID"))
+  left_join(for_individuals, by = c("field_id" = "unit_id"))
 
 transect_referenced <- ec_referenced %>%
   filter(in_transects == T) %>%
-  left_join(for_transects, by = c("field_id" = "Transect", 
-                                  "sampling_protocol" = "Type")) %>%
-  rename('Type'= 'sampling_protocol')
+  left_join(for_transects, by = c("field_id" = "transect", 
+                                  "sampling_protocol" = "type")) %>%
+  rename('type'= 'sampling_protocol')
 
 
 
@@ -152,18 +165,18 @@ too_many_cols <- bind_rows(individual_referenced, transect_referenced)
 too_many_cols <- too_many_cols %>%
   mutate(sampling_event = ifelse(
     # if there is no value for 'Lot' and it's a heath sample
-    is.na(Lot) & Type == "heath",
+    is.na(lot) & type == "heath",
     # use the Transect name from the field_id instead)
     field_id,
     # else use the lot, as its fine
-    Lot)) %>%
+    lot)) %>%
     # same for Type
-  mutate(Type = ifelse(
-    is.na(Type) & sampling_protocol == "heath",
+  mutate(type = ifelse(
+    is.na(type) & sampling_protocol == "heath",
     sampling_protocol,
-    Type
+    type
   ),
-  Type = str_to_title(Type))
+  type = str_to_title(type))
 
 # Save the huge df for reuse in further scripts
 write_csv(too_many_cols, 
@@ -172,22 +185,23 @@ write_csv(too_many_cols,
 
 # make a very basic summary plot
 too_many_cols %>%
-  filter(!is.na(order) & !is.na(Type)) %>%
-  group_by(order, sampling_event, Type) %>%
+  filter(!is.na(order) & !is.na(type)) %>%
+  group_by(order, sampling_event, type) %>%
   summarise(nsamples = n()) %>%
   ggplot(., aes(x = order, y = nsamples)) +
   geom_boxplot() +
-  facet_wrap(.~ Type, scales = 'free')
+  facet_wrap(.~ type, scales = 'free')
 
 
 tib_for_inext <- too_many_cols %>%
   filter(!is.na(bin)) %>%
-  select(bin, order, sampling_event, Type) %>%
+  select(bin, order, sampling_event, type) %>%
   group_by_all() %>%
   summarise(nsamples = n())
 
-# only work on orders with at least the below number of bins
-nbin_threshold <- 5
+# only work on orders with at least the below number of bins (nbin_threshold
+# is set in the external, 'parameters' script, for easy incorporation with
+# manuscript)
 
 desired_orders <- tib_for_inext %>%
   filter(!is.na(order)) %>%
@@ -197,9 +211,9 @@ desired_orders <- tib_for_inext %>%
   pull(order)
 
 traptypes <- tib_for_inext %>%
-  filter(!is.na(Type)) %>%
-  filter(Type != 'Cdc') %>%
-  pull(Type) %>%
+  filter(!is.na(type)) %>%
+  filter(type != 'Cdc') %>%
+  pull(type) %>%
   unique()
 for_inext_list <- list()
 inext_objs <- list()
@@ -210,7 +224,7 @@ for(trap_type in traptypes){
   #cat(o, '\n')
   for_inext_list[[trap_type]] <- list()
   n_events <- tib_for_inext %>%
-    filter(Type == trap_type) %>%
+    filter(type == trap_type) %>%
     pull(sampling_event) %>%
     unique() %>%
     length()
@@ -219,14 +233,14 @@ for(trap_type in traptypes){
     
     cat('order is ', o, 'trap type is ', trap_type, ' number of sampling events was', n_events, '\n')
     incidence_freq <- tib_for_inext %>%
-      filter(Type == trap_type) %>%
+      filter(type == trap_type) %>%
       filter(order == o) %>%
       group_by(bin) %>%
       summarise(freq = n())%>%
       pull(freq) %>%
       sort(decreasing = T)
     
-    nbin_threshold <- 30
+    
     # if there are fewer than nbin_threshold unique BINs in this
     # trap type , discard the order, otherwise save it for analysis
     
@@ -305,11 +319,15 @@ big_inext_plotting <- function(input_list, inext_type){
     geom_line(data = filter(inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
               mapping = aes(linetype=Method))+
     geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
+    scale_linetype('Data type')+
     geom_point(data = filter(inext_tib, Method == 'Observed'),
-               mapping = aes(x = x, y = y))+
+               mapping = aes(x = x, y = y, fill = Method))+
+    #scale_fill_discrete(guide = guide_legend(title = NULL))+
     facet_grid(Assemblage ~trap_type, 
                scales = 'free')+
     theme_bw()+
+    guides(linetype = guide_legend(order=1),
+           fill = guide_legend(order=2, title = NULL))+
     theme(legend.position = 'bottom')+
     labs(x = 'Number of traps', y = yaxis_text)
   
@@ -320,23 +338,23 @@ big_inext_plotting <- function(input_list, inext_type){
 
 type1_inext_plot <- big_inext_plotting(input_list = inext_objs,
                                        inext_type = 1)
-
+type1_inext_plot
 ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
        type1_inext_plot,
-       height = 15)
+       height = 15,
+       dpi = 600)
 
-type1_inext_plot <- big_inext_plotting(input_list = inext_objs,
-                                       inext_type = 1)
-
-ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
+ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
        type1_inext_plot,
-       height = 15)
+       height = 15,
+       dpi = 600)
 
 type2_inext_plot <- big_inext_plotting(input_list = inext_objs,
                                        inext_type = 2)
-ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.pdf'),
+ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
        type2_inext_plot,
-       height = 15)
+       height = 15,
+       dpi = 600)
 
 
 
@@ -349,7 +367,7 @@ ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.pdf'),
 # grouping by the date-time start. Is this correct?
 visit_inext_tib <- too_many_cols %>%
   filter(!is.na(bin)) %>%
-  rename(date =`Date Time End`) %>%
+  rename(date =date_time_end) %>%
   filter(!is.na(date)) %>%
   select(bin, order, date) %>%
   group_by_all() %>%
@@ -428,16 +446,16 @@ nmds_input_generator <- function(taxa_grouping, min_threshold = NA){
   }
   # generate the output matrix
   out_mat <- too_many_cols %>%
-    select(taxa_grouping, bin, Type) %>%
+    select(taxa_grouping, bin, type) %>%
     filter_all(all_vars(!is.na(.))) %>%
-    select(taxa_grouping, Type) %>%
+    select(taxa_grouping, type) %>%
     group_by_all() %>%
     summarise(abundance = n()) %>%
     ungroup() %>%
     pivot_wider(names_from = taxa_grouping, values_from = abundance,
                 # fill missing values with 0, not the default of NA
                 values_fill = 0) %>%
-    column_to_rownames(var="Type") %>%
+    column_to_rownames(var="type") %>%
     as.matrix(.)
   
 
