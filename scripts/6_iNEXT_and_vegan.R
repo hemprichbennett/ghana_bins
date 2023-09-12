@@ -397,7 +397,8 @@ ggsave(here('figures', 'inext_plots', 'overall_visits.pdf'), visit_inext_plot)
 # estimate of 'species' richness
 overall_chaorichness <- ChaoRichness(visit_inext_list, 
                                      datatype = 'incidence_freq') %>%
-  mutate(percent_completeness = Observed / Estimator * 100)
+  mutate(percent_completeness = Observed / Estimator * 100) %>%
+  rownames_to_column('taxa')
 
 write_csv(overall_chaorichness,
           file = here('results', 'overall_chaorichness.csv'))
