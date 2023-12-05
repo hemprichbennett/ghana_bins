@@ -97,6 +97,25 @@ for(i in 1:length(site_tables)){
     write_csv(., file = filename)
 }
 
+# make a table that's just the taxonomy of samples we collected
+
+
+
+orders_and_families_sequenced <- bold_field_data %>%
+  filter(!is.na(order) & !is.na(family)) %>%
+  select(order, family) %>%
+  distinct() %>%
+  left_join(common_names) %>%
+  select(order, english_common_name, family) %>%
+  arrange(across(everything())) %>%
+  rename(`Taxonomic Order` = order,
+         `Taxonomic Order's english common name` = english_common_name, 
+         `Taxonomic Family` = family)
+
+family_common_names <- taxize::sci2comm(orders_and_families_sequenced$`Taxonomic Family`)
+
+write_csv(orders_and_families_sequenced, file = 'results/orders_and_families_sequenced.csv')
+
 # Basic plotting ----------------------------------------------------------
 
 # function happily borrowed from https://stackoverflow.com/a/66583089
@@ -238,7 +257,7 @@ for(chosen_order in to_inext){
     pull(n)
   cat(chosen_order, 'contains', length(abundance_vec), 'different BINs\n')
   # if the Order only contains less than 10 BINs, abandon it
-  if(length(abundance_vec) >= 10){
+  if(length(abundance_vec) >= 40){
     abundance_list[[chosen_order]] <-abundance_vec 
   }
   
@@ -250,15 +269,15 @@ for(chosen_order in to_inext){
 
 # a basic iNEXT object with all items on a single plot
 abun_iNEXT <- iNEXT(abundance_list, datatype = 'abundance')
-# basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
-#   theme(legend.position = 'bottom') + 
-#   ggtitle(paste('Samples with sequencing data available on', download_date))+
-#   xlab(paste('Number of samples sequenced')) +
-#   ylab("BIN richness") # CHECK THAT THIS IS DEFINITELY WHAT IT SHOWS
-# 
-# basic_gginext
-# ggsave('figures/basic_gginext.jpeg', basic_gginext,
-#        width = 12)
+basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
+  theme(legend.position = 'bottom') +
+  ggtitle(paste('BIN accumulation-rate of the', nsamples, 'samples sequenced by', download_date))+
+  xlab(paste('Number of samples sequenced')) +
+  ylab("BIN richness") # CHECK THAT THIS IS DEFINITELY WHAT IT SHOWS
+
+basic_gginext
+ggsave('figures/basic_gginext.jpeg', basic_gginext,
+       width = 12)
 
 
 # now, we throw the kitchen sink at the dataset
