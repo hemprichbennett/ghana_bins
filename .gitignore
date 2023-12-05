@@ -12,3 +12,4 @@ results/*
 *.jpeg
 params.py
 *.pyc
+*.docx
