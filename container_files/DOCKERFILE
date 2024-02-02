@@ -1,0 +1,12 @@
+FROM rocker/rstudio:latest
+
+RUN /rocker_scripts/install_tidyverse.sh
+RUN /rocker_scripts/install_quarto.sh
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+  libcurl4-openssl-dev libglpk-dev \
+  && rm -rf /var/lib/apt/lists/* \
+  && R -q -e 'install.packages(c("iNEXT", "bold", "janitor", "countrycode", "taxize"))'
+
+WORKDIR /home/rstudio
