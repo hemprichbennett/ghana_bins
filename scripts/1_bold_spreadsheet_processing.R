@@ -11,6 +11,7 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(readr)
+library(taxize)
 
 
 # Read in the data
@@ -112,7 +113,7 @@ orders_and_families_sequenced <- bold_field_data %>%
          `Taxonomic Order's english common name` = english_common_name, 
          `Taxonomic Family` = family)
 
-family_common_names <- taxize::sci2comm(orders_and_families_sequenced$`Taxonomic Family`)
+family_common_names <- sci2comm(orders_and_families_sequenced$`Taxonomic Family`)
 
 write_csv(orders_and_families_sequenced, file = 'results/orders_and_families_sequenced.csv')
 
