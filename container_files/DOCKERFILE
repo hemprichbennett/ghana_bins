@@ -1,7 +1,10 @@
-FROM rocker/rstudio:latest
+FROM rocker/verse:latest
 
-RUN /rocker_scripts/install_tidyverse.sh
 RUN /rocker_scripts/install_quarto.sh
+
+ RUN tlmgr update --all --self \
+  && tlmgr install pdfcol unicode-math booktabs caption float tcolorbox pgf environ soul \
+  && tlmgr path add || true
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
