@@ -7,6 +7,6 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   libcurl4-openssl-dev libglpk-dev \
   && rm -rf /var/lib/apt/lists/* \
-  && R -q -e 'install.packages(c("iNEXT", "bold", "janitor", "countrycode", "taxize"))'
+  && R -q -e 'install.packages(c("iNEXT", "bold", "janitor", "countrycode", "taxize", "here"))'
 
 WORKDIR /home/rstudio
