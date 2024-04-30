@@ -18,7 +18,7 @@ library(taxize)
 
 # this assumes that the input data has had the redundant first two rows
 # (eyeroll) of the raw data on each spreadsheet removed
-xl_paths <- list.files(path = 'data/processed_data', pattern = '*tidied*', full.names = T, recursive = T)
+xl_paths <- list.files(path = 'data/processed_data', pattern = 'bold.xlsx', full.names = T, recursive = T)
 
 download_date <- file.info('data/raw_data/GCEP/bold.xlsx')$ctime %>% 
   ymd_hms() %>%
@@ -34,7 +34,7 @@ data_import <- function(xl_path){
     excel_sheets() %>% 
     set_names() %>% 
     # read all the sheets in as individual list items
-    map(read_excel, path = xl_path) %>%
+    map(read_excel, path = xl_path, skip = 2) %>%
     # join  them all into a master sheet
     reduce(., left_join) %>%
     clean_names() %>%
@@ -44,7 +44,7 @@ data_import <- function(xl_path){
 
 
 # now read in the data, with each spreadsheet being a different list item
-bold_list <- lapply(xl_paths, data_import)  
+bold_list <- lapply(xl_paths, data_import)
 
 # combine the list items into a single dataframe
 bold_data <- bind_rows(bold_list)
