@@ -263,9 +263,9 @@ Heath traps provided the majority of samples barcoded (@tbl-per-traptype-summary
 
 No trap types or taxonomic orders approached completeness (@fig-type1 and @fig-type2).
 
-![Type 1 iNEXT plot](../figures/inext_plots/type1_inext_plot.png){#fig-type1 height=20cm}
+![Type 1 iNEXT plot](../figures/inext_plots/type1_inext_plot.png){#fig-type1 height="20cm"}
 
-![Type 2 iNEXT plot](../figures/inext_plots/type2_inext_plot.png){#fig-type2 height=20cm}
+![Type 2 iNEXT plot](../figures/inext_plots/type2_inext_plot.png){#fig-type2 height="20cm"}
 
 ### NMDS
 
@@ -279,9 +279,9 @@ family_bd <- read_csv(here('results', 'adonis', 'family_betadispersion.csv'))
 
 NMDS ordinations for both taxonomic Order and Family showed some overlap between the trap types (@fig-order-nmds and @fig-family-nmds). The Permutational Multivariate Analysis of Variance test showed a significant difference between trap types at both the order level (p =`r order_adonis %>% select(p.value) %>% head(1)%>% signif(5)`) and family level (p = `r family_adonis %>% select(p.value) %>% head(1)%>% signif(5)`). However betadispersion was significant for both the order (p = `r order_bd %>% select(p.value) %>% head(1) %>% signif(5)`) and family (p = `r family_bd %>% select(p.value) %>% head(1)%>% signif(5)`) analyses. *(I'll tidy those numbers up later, just not sure how to do it yet)*
 
-![Order-level NMDS plot](../figures/nmds/order_nmds.png){#fig-order-nmds height=20cm}
+![Order-level NMDS plot](../figures/nmds/order_nmds.png){#fig-order-nmds height="20cm"}
 
-![Family-level NMDS plot](../figures/nmds/family_nmds.png){#fig-family-nmds height=20cm}
+![Family-level NMDS plot](../figures/nmds/family_nmds.png){#fig-family-nmds height="20cm"}
 
 ## Geographic analyses
 
