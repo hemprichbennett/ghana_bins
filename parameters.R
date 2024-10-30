@@ -1,1 +1,3 @@
-nbin_threshold <- 30
+nbin_threshold <- 20
+
+nmds_inclusion_threshold <-10
