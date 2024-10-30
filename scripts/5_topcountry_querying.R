@@ -39,9 +39,15 @@ if(!dir.exists(outdir)){
   dir.create(outdir)
 }
 
+# make a vector of our top countries AND all african countries
+african_countries <- readr::read_lines('data/raw_data/african_countries.txt')
+
+countries_to_query <- c(country_rankings$country, african_countries) %>%
+  # remove duplicates
+  unique()
 
 country_list <- list()
-for(chosen_country in country_rankings$country){
+for(chosen_country in countries_to_query){
   print(chosen_country)
   if(chosen_country %in% exclude_from_query){
     cat(chosen_country, ' has already been queried recently. Skipping\n')
@@ -49,5 +55,9 @@ for(chosen_country in country_rankings$country){
   }
   cat('--------------------------\nTime is ', as.character(lubridate::now()), '\n', 'querying ', chosen_country, sep = '')
   country_list[[chosen_country]] <- bold_seqspec(geo = chosen_country)
+  # some countries do not exist on BOLD, skip them if so
+  if(length(country_list[[chosen_country]]) > 0){
+    next()
+  }
   write_csv(country_list[[chosen_country]], paste0(outdir, '/', chosen_country, '.csv'))
 }
