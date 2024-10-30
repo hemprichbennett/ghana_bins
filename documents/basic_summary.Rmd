@@ -19,10 +19,16 @@ download_date <- file.info(here('data', 'raw_data','GCEP','bold.xlsx'))$ctime %>
 
 ```
 
-This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on `r download_date`. As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps.  
-  
-  
-We have the following numbers of samples and BINs in each project:  
+This is a basic summary of the BIN data that was available for download from BOLD for our projects GCEP and TMGHA, on `r download_date`. We have the following numbers of samples and BINs overall in our dataset:
+
+```{r}
+our_big_df %>% 
+  summarise(`Number of samples` = n(),
+            `Number of BINs` = length(unique(bin))) %>%
+  knitr::kable()
+```
+
+As far as I understand it GCEP is our general dataset, TMGHA is our heath-traps. We have the following numbers of samples and BINs in each project:  
   
   
 
@@ -35,7 +41,7 @@ our_big_df %>%
   knitr::kable()
 ```
   
-  
+
   
 <!--*(A sidenote in case anyone compares these values to those on the BOLD portal: there is a tiny difference between the number of BINs reported above, and those on the summary data that you see in our console on BOLD. That's because on BOLD's summary data it counts, for example, 'BOLD:AEK3140' in project TMGHA as two distinct BINs because some of our samples matching that BIN have been visually classified as Coleoptera, and the rest of our samples matching that BIN have been visually classified as Staphylinidae. As Staphylinidae is a family within the Coleoptera, for our purposes I count that as a single BIN rather than being two discrete taxonomic units. BOLD's UI makes me sad.)*  -->
   
@@ -63,7 +69,7 @@ Here is the BIN availability status of all of the samples we've sequenced so far
   
 For example, we've sequenced `r sum(coleoptera_samples)` individual Coleoptera samples, of which `r coleoptera_samples[1]` matched BINs which are already publicly available, `r coleoptera_samples[2]` matched BINs which have been sequenced by others but are not yet publicly available on BOLD, and `r coleoptera_samples[3]` are BINs that are only known from our projects.  
   
-  ```{r}
+```{r}
 knitr::kable(overall_sample_uniqueness)
 ```
  
@@ -78,9 +84,12 @@ overall_bin_uniqueness <- read_csv(here('results', 'unique_data', 'overall_bin_u
 coleoptera_bins <- overall_bin_uniqueness %>% 
   filter(Order == 'Coleoptera') %>% 
   select(-c(1:2))
+
+n_no_public_seqs <- sum(overall_bin_uniqueness$`Already sequenced, no public sequences`)
+n_unique_to_us <- sum(overall_bin_uniqueness$`Unique to our project`)
 ```
   
-And here is the data if we count BINs, rather than samples.  
+And here is the data if we count BINs, rather than samples. `r n_no_public_seqs` BINs have been sequenced before but are not public, and `r n_unique_to_us` BINs are unique to our dataset. Opening our dataset to the public will thus represent `r n_no_public_seqs + n_unique_to_us` BINs entering the public domain for the first time
   
 For example, the Coleoptera that we've sequenced have been assigned to `r sum(coleoptera_bins)` different BINs. `r coleoptera_bins[1]` of those BINs are already publicly available, `r coleoptera_bins[2]` BINs have been sequenced by others but are not yet publicly available on BOLD, and `r coleoptera_bins[3]` BINs are only known from our projects.  
   
@@ -90,11 +99,10 @@ knitr::kable(overall_bin_uniqueness)
 ```
  
 
-I've obtained further taxonomic and geographic information for all of the public records on BOLD which match our BINs, but have yet to do anything with it. I originally tried to plot the above datasets, but the wildly differing numbers per-taxa made choosing an appropriate y-axis difficult. Any suggestions for analyses and/or figures are gratefully received :)  
 
 # Overall taxonomic composition
 
-Ignoring data-availability as a variable, here's the taxonomic composition of our samples so far:
+Ignoring data-availability as a variable, here's the taxonomic composition of our samples so far. Please note the log y-axis:
   
   
 ![](../figures/sample_taxonomy.jpeg)
@@ -120,8 +128,6 @@ Using the above information we can also calculate the rates of BIN accumulation 
 # Gratuitous over-analysing / breaking data down by village
   
   
-I'm assuming that most of you won't be so keen on seeing the below data, but I've also broken our data down by village in case it's of interest. Feel free to exit now if this isn't so interesting.  
-
 
 ## Sample-based uniqueness
 
