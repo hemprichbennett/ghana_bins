@@ -95,7 +95,7 @@ unmatched_summary <- unmatched %>%
   group_by(order, trap_type) %>%
   summarise(nsamples = n(), nbins = length(unique(bin)))
 
-ggplot(unmatched_summary, aes(x = trap_type,
+unique_sample_trapping <- ggplot(unmatched_summary, aes(x = trap_type,
                               y = nbins,
                               fill = trap_type))+
   geom_bar(position='dodge', stat='identity')+
@@ -106,3 +106,59 @@ ggplot(unmatched_summary, aes(x = trap_type,
   guides(fill = guide_legend(title = 'Trap type:'))+
   labs(x = 'Trap type', 
        y = 'Number of BINs that were not publicly available on BOLD')
+
+
+
+trap_and_status <- bold_and_earthcape_combined %>%
+  filter(!is.na(order)) %>%
+  # make a boolean variable, for if the BIN was/was not publicly available
+  # prior to our dataset being made open
+  mutate(publicly_available = 
+           ifelse(bin %in% public_matches$bin, 'Already publicly available',
+                  'Not publicly available')) %>%
+  group_by(order, trap_type, publicly_available) %>%
+  summarise(nsamples = n(), nbins = length(unique(bin)))
+
+
+# A function to ensure that the y axis labels' breaks are always integers, taken
+# from https://stackoverflow.com/questions/15622001/how-to-display-only-integer-values-on-an-axis-using-ggplot2
+integer_breaks <- function(n = 5, ...) {
+  fxn <- function(x) {
+    breaks <- floor(pretty(x, n, ...))
+    names(breaks) <- attr(breaks, "labels")
+    breaks
+  }
+  return(fxn)
+}
+
+trap_bin_availability_plot <- ggplot(trap_and_status, aes(x = trap_type,
+                              y = nbins,
+                              #colour = trap_type,
+                            fill = publicly_available))+
+  geom_bar(position='stack', stat='identity')+
+  
+  scale_fill_manual(values = c('steelblue', 'red'))+
+  theme_bw()+
+  # ensure that the y-axis breaks are always integers, using the function above
+  scale_y_continuous(breaks = integer_breaks())+
+  theme(legend.position = 'bottom',
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        text=element_text(size=20))+
+  #guides(fill = guide_legend(title = 'Trap type:'))+
+  labs(x = 'Trap type', 
+       y = 'Number of BINs that were/weren\'t publicly available on BOLD',
+       fill = 'BIN availability')
+
+trap_bin_availability_tall <- trap_bin_availability_plot +
+  facet_wrap(.~ order, scales = 'free_y')
+ggsave(filename = here('figures', 'trap_bin_availability.jpeg'),
+       dpi = 600,
+       plot = trap_bin_availability_tall)
+
+
+trap_bin_availability_wide <- trap_bin_availability_plot +
+  facet_wrap(.~ order, scales = 'free_y', ncol = 7)
+ggsave(filename = here('figures', 'trap_bin_availability_wide.jpeg'),
+       dpi = 600,
+       plot = trap_bin_availability_wide, height = 10, width = 20)
+
