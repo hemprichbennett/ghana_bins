@@ -12,7 +12,7 @@ our_bin_reports <- list.files(path = 'data/processed_data',
                               recursive = T,
                               full.names = T) %>%
   map_dfr(read_tsv, id = 'project') %>%
-  mutate(project = gsub('.+data/|/bin.+', '', project))
+  mutate(project = gsub('.+data/|/bin.+', '', project)) 
 
 # a few of the our BINs have multiple rows within a single project,
 # because they have multiple taxonomic identifiers associated with them,
