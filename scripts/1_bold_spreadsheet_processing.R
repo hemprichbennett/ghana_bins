@@ -16,8 +16,7 @@ library(taxize)
 
 # Read in the data
 
-# this assumes that the input data has had the redundant first two rows
-# (eyeroll) of the raw data on each spreadsheet removed
+
 xl_paths <- list.files(path = 'data/raw_data', pattern = 'bold.xlsx', full.names = T, recursive = T)
 
 download_date <- file.info('data/raw_data/GCEP/bold.xlsx')$ctime %>% 
