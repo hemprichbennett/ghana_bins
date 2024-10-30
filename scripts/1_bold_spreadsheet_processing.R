@@ -18,15 +18,14 @@ library(taxize)
 
 # this assumes that the input data has had the redundant first two rows
 # (eyeroll) of the raw data on each spreadsheet removed
-xl_paths <- list.files(path = 'data/processed_data', pattern = 'bold.xlsx', full.names = T, recursive = T)
+xl_paths <- list.files(path = 'data/raw_data', pattern = 'bold.xlsx', full.names = T, recursive = T)
 
 download_date <- file.info('data/raw_data/GCEP/bold.xlsx')$ctime %>% 
   ymd_hms() %>%
   format(., "%d %B %Y")
 
 
-# function for taking the horrible excel files and (assuming that the redundant first
-# two rows of the raw data on each spreadsheet are removed) loads it in in
+# function for taking the horrible excel files and loads it in in
 # a useable format
 
 data_import <- function(xl_path){
@@ -190,7 +189,7 @@ bold_field_data %>%
         text = element_text(size = 20))+
   ggtitle(paste('Taxonomic orders of the', nsamples, 'samples sequenced by', download_date))+
   labs(x = 'Taxonomic Order', y = 'Number of samples')
-ggsave('figures/sample_taxonomy.jpeg', width = 14)
+ggsave('figures/sample_taxonomy.png', width = 14)
 
 
 # now the same plot, but split between sites
@@ -209,7 +208,7 @@ bold_field_data %>%
         text = element_text(size = 20))+
   ggtitle(paste('Taxonomic orders of the field samples sequenced by', download_date))+
   labs(x = 'Taxonomic Order', y = 'Number of samples')
-ggsave('figures/site_taxonomy.jpeg', width = 14)
+ggsave('figures/site_taxonomy.png', width = 14)
 
 
 # iNEXT data prep ---------------------------------------------------------
@@ -245,7 +244,7 @@ order_nsamples <- order_bin_frequencies %>%
 # get the names of the orders with 40 or more
 # samples
 to_inext <- order_nsamples %>%
-  filter(nsamples > 50) %>%
+  filter(nsamples > 500) %>%
   filter(!is.na(order)) %>%
   pull(order)
 
@@ -277,7 +276,7 @@ basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
   ylab("BIN richness") # CHECK THAT THIS IS DEFINITELY WHAT IT SHOWS
 
 basic_gginext
-ggsave('figures/basic_gginext.jpeg', basic_gginext,
+ggsave('figures/basic_gginext.png', basic_gginext,
        width = 12)
 
 
