@@ -100,20 +100,20 @@ for(i in 1:length(site_tables)){
 
 
 
-orders_and_families_sequenced <- bold_field_data %>%
-  filter(!is.na(order) & !is.na(family)) %>%
-  select(order, family) %>%
-  distinct() %>%
-  left_join(common_names) %>%
-  select(order, english_common_name, family) %>%
-  arrange(across(everything())) %>%
-  rename(`Taxonomic Order` = order,
-         `Taxonomic Order's english common name` = english_common_name, 
-         `Taxonomic Family` = family)
-
-family_common_names <- sci2comm(orders_and_families_sequenced$`Taxonomic Family`)
-
-write_csv(orders_and_families_sequenced, file = 'results/orders_and_families_sequenced.csv')
+# orders_and_families_sequenced <- bold_field_data %>%
+#   filter(!is.na(order) & !is.na(family)) %>%
+#   select(order, family) %>%
+#   distinct() %>%
+#   left_join(common_names) %>%
+#   select(order, english_common_name, family) %>%
+#   arrange(across(everything())) %>%
+#   rename(`Taxonomic Order` = order,
+#          `Taxonomic Order's english common name` = english_common_name, 
+#          `Taxonomic Family` = family)
+# 
+# family_common_names <- sci2comm(orders_and_families_sequenced$`Taxonomic Family`)
+# 
+# write_csv(orders_and_families_sequenced, file = 'results/orders_and_families_sequenced.csv')
 
 # Basic plotting ----------------------------------------------------------
 
