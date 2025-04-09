@@ -45,7 +45,85 @@ data_import <- function(xl_path){
 bold_list <- lapply(xl_paths, data_import)
 
 # combine the list items into a single dataframe
-bold_data <- bind_rows(bold_list)
+bold_data <- bind_rows(bold_list) %>%
+  # replace all hyphens with underscores in field IDs
+  mutate(field_id = gsub('-', '_', field_id))
+
+
+
+# for debugging, get the formats of the field IDs that will need pairing to
+# earthcape
+
+bold_data <- bold_data %>%
+  mutate(sample_naming_convention = 'unknown')
+
+# trial samples, which aren't to be used for any actual analyses
+bold_data %>%
+  filter(grepl(' ', field_id)) %>%
+  pull(field_id)
+
+bold_data <- bold_data %>%
+  mutate(sample_naming_convention = ifelse(
+    grepl(' ', field_id), 'trial_sample', sample_naming_convention)
+    )
+
+# the patterns of individual IDs on earthcape. E.g. TI_RL_35515_G09
+ec_individual_pattern_1 <- '[A-Z]{2}_[A-Z]{2}_[0-9]{5}_[A-Z][0-9]{2}'
+
+bold_data %>%
+  filter(grepl(ec_individual_pattern_1, field_id)) %>%
+  pull(field_id)
+
+
+bold_data <- bold_data %>%
+  mutate(sample_naming_convention = ifelse(
+    grepl(ec_individual_pattern_1, field_id), 'ec_individual_type1', sample_naming_convention)
+  )
+
+# the second type of pattern on earthcape individuals. E.g. CRAG_TI_1375
+ec_individual_pattern_2 <- 'CRAG_TI_[0-9]{1,4}'
+
+bold_data %>%
+  filter(grepl(ec_individual_pattern_2, field_id)) %>%
+  pull(field_id)
+
+
+bold_data <- bold_data %>%
+  mutate(sample_naming_convention = ifelse(
+    grepl(ec_individual_pattern_2, field_id), 'ec_individual_type2', sample_naming_convention)
+  )
+
+# the main pattern for earthcape transects. E.g. 2_AA_NW_8
+ec_transect_pattern1 <- '[0-9]_[A-Z]{2}_[A-Z]{2}_[0-9]'
+
+bold_data %>%
+  filter(grepl(ec_transect_pattern1, field_id)) %>%
+  pull(field_id)
+
+
+bold_data <- bold_data %>%
+  mutate(sample_naming_convention = ifelse(
+    grepl(ec_transect_pattern1, field_id), 'ec_transect1', sample_naming_convention)
+  )
+
+# the secondary pattern for earthcape transects. E.g. MA02
+ec_transect_pattern2 <- '[A-Z]{2}[0-9]{2}'
+
+bold_data %>%
+  filter(grepl(ec_transect_pattern2, field_id)) %>%
+  pull(field_id)
+
+
+bold_data <- bold_data %>%
+  mutate(sample_naming_convention = ifelse(
+    grepl(ec_transect_pattern2, field_id), 'ec_transect2', sample_naming_convention)
+  )
+
+
+# unmatched field IDs
+bold_data %>%
+  filter(sample_naming_convention == 'unknown') %>%
+  pull(field_id)
 
 write_csv(bold_data, 'data/processed_data/our_organised_bold_data.csv')
 
