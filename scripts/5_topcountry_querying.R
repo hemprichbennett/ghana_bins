@@ -56,8 +56,13 @@ for(chosen_country in countries_to_query){
   cat('--------------------------\nTime is ', as.character(lubridate::now()), '\n', 'querying ', chosen_country, sep = '')
   country_list[[chosen_country]] <- bold_seqspec(geo = chosen_country)
   # some countries do not exist on BOLD, skip them if so
-  if(length(country_list[[chosen_country]]) > 0){
-    next()
+  if(length(country_list[[chosen_country]])< 2){
+    if(is.na(country_list[[chosen_country]])){
+      cat('\n', chosen_country, 'had no results\n')
+      next()
+    }
+  
   }
   write_csv(country_list[[chosen_country]], paste0(outdir, '/', chosen_country, '.csv'))
+  cat('\n', chosen_country, 'queried and saved\n')
 }
