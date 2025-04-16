@@ -14,7 +14,7 @@ in_df <- read_csv(file_path) %>%
 date_of_export <- gsub('.+/|_Individuals.+', '', file_path) %>%
   lubridate::ymd()
 
-in_df <- in_df %>%
+processed_df <- in_df %>%
   # Various string substitutions to convert temporary_name
   # to a uniform, pleasant, format
   mutate(Order = gsub('_.+', '', temporary_name)) %>%
@@ -25,7 +25,7 @@ in_df <- in_df %>%
   group_by(Order) %>%
   summarise(n = n())
 
-ggplot(in_df, aes(x = Order, y = n)) +
+ggplot(processed_df, aes(x = Order, y = n)) +
   geom_bar(stat = 'identity') +
   theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
