@@ -160,9 +160,7 @@ ec_transects <- read_csv(
 # Combine BOLD and earthcape data -----------------------------------------
 
 
-bold_organised <- read_csv(
-  here('data', 'processed_data', 'our_organised_bold_data.csv')) %>%
-  janitor::clean_names() %>%
+bold_data <- bold_data %>%
   mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol),
          # convert all hyphens in 'field_id' to underscores
          field_id = gsub('-', '_', field_id),
@@ -175,13 +173,13 @@ bold_organised <- read_csv(
 
 
 
-str(bold_organised)
-unique(bold_organised$field_id)
-bold_organised$field_id %in% ec_individuals$unit_id
+str(bold_data)
+unique(bold_data$field_id)
+bold_data$field_id %in% ec_individuals$unit_id
 
 # make a dataframe with a column saying if the field_id value was found in
 # individuals or transects
-ec_referenced <- bold_organised %>%
+ec_referenced <- bold_data %>%
   mutate(in_individuals = field_id %in% ec_individuals$unit_id,
          in_transects = field_id %in% ec_transects$name)
 
