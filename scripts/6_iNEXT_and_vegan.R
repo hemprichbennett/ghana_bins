@@ -212,6 +212,11 @@ ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
        height = 15,
        dpi = 600)
 
+ggsave(filename = here('figures', 'fig_2_type1_inext_plot.png'),
+       type1_inext_plot,
+       height = 15,
+       dpi = 600)
+
 ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
        type1_inext_plot,
        height = 15,
@@ -220,6 +225,11 @@ ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
 type2_inext_plot <- big_inext_plotting(input_list = inext_objs,
                                        inext_type = 2)
 ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
+       type2_inext_plot,
+       height = 15,
+       dpi = 600)
+
+ggsave(filename = here('figures', 'fig_3_type2_inext_plot.png'),
        type2_inext_plot,
        height = 15,
        dpi = 600)
@@ -425,6 +435,7 @@ family_nmds <- nmds(family_nmds_input, title_str = 'Family-level NMDS',
 
 family_nmds$nmds_plot
 ggsave(here('figures', 'nmds', 'family_nmds.png'), family_nmds$nmds_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_5_family_nmds.png'), family_nmds$nmds_plot, height = 12, width = 10)
 
 order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
                                          min_trap_threshold = nmds_inclusion_threshold)
@@ -434,6 +445,7 @@ order_nmds <- nmds(order_nmds_input,title_str = 'Order-level NMDS',
                    max_tries = 100)
 order_nmds$nmds_plot
 ggsave(here('figures', 'nmds', 'order_nmds.png'),order_nmds$nmds_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_4_order_nmds.png'),order_nmds$nmds_plot, height = 12, width = 10)
 
 
 

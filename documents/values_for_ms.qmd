@@ -3,7 +3,7 @@ title: "Values etc for Ghana BINs draft manuscript"
 
 format: 
   docx: default
-editor: visual
+editor: source
 date: "`r Sys.Date()`"
 date-format: medium
 execute:
