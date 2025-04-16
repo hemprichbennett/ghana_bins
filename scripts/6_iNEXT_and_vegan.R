@@ -291,7 +291,7 @@ write_csv(overall_chaorichness,
 
 # the number of samples classed to BIN/ not classed to BIN
 
-samples_with_bins <- bold_organised %>% 
+samples_with_bins <- too_many_cols %>% 
   mutate(has_bin = !is.na(bin)) %>%
   group_by(order, has_bin) %>%
   summarise(n = n()) %>%
