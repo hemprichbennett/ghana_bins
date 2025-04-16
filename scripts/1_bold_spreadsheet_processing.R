@@ -240,7 +240,9 @@ for_individuals <- ec_individuals %>%
 for_transects <- ec_lots %>%
   rename(lot = lot_id) %>%
   left_join(ec_transects, by = c("transect" = "name")) %>%
-  select(lot, transect, latitude.y, longitude.y,
+  select(lot, transect, 
+         # select the coordinates of the lot, not the transect's centroid
+         latitude.x, longitude.x,
          date, direction, locality.x, type)
 
 
@@ -532,7 +534,3 @@ fortified_iNEXT <- fortify(big_iNEXT)
 # commands will take a long time
 write_csv(fortified_iNEXT, 'data/processed_data/fortified.csv')
 
-
-# I've not yet written it, but analysis and plotting of fortified_iNEXT
-# should happen in a different script, rather than having to repeatedly
-# rerun the above code.
