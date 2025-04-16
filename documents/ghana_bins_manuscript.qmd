@@ -54,9 +54,6 @@ author:
     affiliation: 
       - ref: UoO
 format: 
-  pdf: default
-  plos-pdf:
-    keep-tex: true
   docx: default
 editor: visual
 date: "`r Sys.Date()`"
@@ -79,9 +76,9 @@ bold_and_earthcape_combined <- read_csv(
   
   mutate(
     # make the date/time columns formatted as date/time, not character
-    date_time_start = dmy_hm(date_time_start),
+    #date_time_start = dmy_hm(date_time_start),
     # make a column of just the start DATES of sampling (remove the time data)
-    start_date = date(date_time_start),
+    start_date = date(date),
     sampling_month = month(start_date, label = T),
     sampling_year = year(start_date),
     year_and_month = paste(sampling_month, sampling_year))
