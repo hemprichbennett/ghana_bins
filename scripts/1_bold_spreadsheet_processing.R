@@ -188,19 +188,6 @@ ec_referenced <- bold_data %>%
 duplicate_matches <- ec_referenced %>%
   filter(in_individuals == T & in_transects == T)
 
-# Annoyingly in the data there seems to be a mix of hyphens and underscores
-# used as delimiters for transect names. They're mostly paired fine, but BOLD
-# has samples with field_id '2-MA-NE-2' but earthcape calls it '2_MA_NE_2'
-# 
-# ec_referenced <- ec_referenced %>% 
-#   mutate(better_field_id = 
-#            # if the field_id is in neither individuals or transects
-#            ifelse(in_individuals == F & in_transects == F, 
-#                   # replace any hyphens with underscores
-#                   gsub('-', '_', field_id),
-#                   # else, return field_id unedited
-#                   field_id)
-#          )
 str(ec_individuals)
 str(ec_transects)
 str(ec_lots)
