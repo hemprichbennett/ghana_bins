@@ -9,7 +9,6 @@ date-format: medium
 execute:
   echo: false
   warning: false
-bibliography: references.bib
 ---
 
 ```{r basic summary}
@@ -67,7 +66,7 @@ our_data_with_availability <- read_csv(
 
 ## 
 
-Dave here: I've made this document to house assorted values that we'll want to use in the final manuscript itself. It's quick for me to auto-update this file and all of the values within, sadly it would be a headache for me to continually incorporate everyone's edits to the manuscript prose itself. All values, dates etc in here will have been correct at the date above, which was when I last re-rendered it.
+Dave here: I've made this skeleton document to house assorted values that we'll want to use in the final manuscript itself, they should just be copied into that document from here. It's quick for me to auto-update this file and all of the values within, sadly it would be a headache for me to continually incorporate everyone's edits to the manuscript prose itself. All values, dates etc in here will have been correct at the date above, which was when I last re-rendered it.
 
 # Methods
 
@@ -104,11 +103,11 @@ abundant_bin_summary <- our_data_with_availability %>%
 
 Our data was downloaded from BOLD on `r our_data_download_date`, and BOLD was queried for information on the publicly available BINs that matched BINs in our dataset.
 
-Using the iNEXT [@chaoRarefactionExtrapolationHill2014] R package, sampling completeness was calculated for each taxonomic order and trap type used; using the rate of BIN-accumulation to estimate the sampling effort required before all potential BINs in the landscape that would be captured by a given trap-type were obtained. Calculations only took place for combinations of taxonomic order and trap-type where at least `r nbin_threshold` BINs were detected. I.e. calculations would not have taken place for spiders and malaise traps, if only `r nbin_threshold-1` spider BINs were detected in malaise traps.
+Using the iNEXT R package, sampling completeness was calculated for each taxonomic order and trap type used; using the rate of BIN-accumulation to estimate the sampling effort required before all potential BINs in the landscape that would be captured by a given trap-type were obtained. Calculations only took place for combinations of taxonomic order and trap-type where at least `r nbin_threshold` BINs were detected. I.e. calculations would not have taken place for spiders and malaise traps, if only `r nbin_threshold-1` spider BINs were detected in malaise traps.
 
 ### NMDS
 
-A series of non-metric multidimensional scaling (NMDS) analyses were ran for the dataset using the 'vegan' R package [@oksanenVeganCommunityEcology2022]. Taxonomic groups were only included in the dataset if they contained a minimum of `r nmds_inclusion_threshold` samples (i.e. a taxonomic order would only be included in the order-level NMDS if the dataset contained `r nmds_inclusion_threshold` or more samples of that order). CDC traps were excluded from this analysis due to the low number of BINs obtained from them.
+A series of non-metric multidimensional scaling (NMDS) analyses were ran for the dataset using the 'vegan' R package. Taxonomic groups were only included in the dataset if they contained a minimum of `r nmds_inclusion_threshold` samples (i.e. a taxonomic order would only be included in the order-level NMDS if the dataset contained `r nmds_inclusion_threshold` or more samples of that order). CDC traps were excluded from this analysis due to the low number of BINs obtained from them.
 
 To analyse the extent of potential differences between the communities included in the NMDS analyses, we also ran a Permutational Multivariate Analysis of Variance Using Distance Matrices, using bray-curtis dissimilarity, using the vegan R package, and the betadispersion of the communities in each trap was calculated.
 
@@ -118,7 +117,7 @@ We queried BOLD for the available metadata all BINs in our dataset that already 
 
 ### Closing sentence
 
-All analyses took place using R [@rcoreteamLanguageEnvironmentStatistical2023]. All code for this manuscript is available at https://github.com/hemprichbennett/ghana_bins.
+All analyses took place using R. All code for this manuscript is available at https://github.com/hemprichbennett/ghana_bins.
 
 # Results
 
@@ -129,12 +128,14 @@ We detected `r bold_and_earthcape_combined %>% filter(!is.na(bin)) %>% pull(bin)
 ```{r}
 #| label: tbl-per-traptype-summary
 #| tbl-cap: The number of samples and BINs sequenced for each trap type used
-bold_and_earthcape_combined %>% 
+tbl_1 <- bold_and_earthcape_combined %>% 
   filter(!is.na(type)) %>% 
   group_by(type) %>% 
   summarise(`Number of samples` = n(), 
             `Number of BINs` = length(unique(bin))) %>%
   knitr::kable(., format.args = list(big.mark = ','))
+
+write_csv(tbl_1, file = here('results', 'manuscript_tables', 'table_1.csv'))
 ```
 
 Of the `r retention_threshold` most-abundant BINs in our dataset, `r abundant_bin_summary %>% filter(available == 'Already publicly available') %>% pull(n_bins)` were already publicly available, `r abundant_bin_summary %>% filter(available == 'Already sequenced, no public sequences') %>% pull(n_bins)` had already been sequenced but no other representatives of that BIN were publicly available on BOLD, and `r abundant_bin_summary %>% filter(available == 'Unique to our project') %>% pull(n_bins)` BINs were unique to our project.
@@ -210,4 +211,4 @@ country_rankings <- our_big_df %>%
 
 It's encouraging to see that several African countries are in the top 20, but noteworthy that Ghana is at number `r country_rankings %>% filter(Country == 'Ghana') %>% pull(Ranking)` and there are few representatives of nearby countries. Some of that will be due to varying habitat types, but it highlights just how undersampled West Africa currently is. A lot of these common BINs are also likely to be cosmopolitan/invasive taxa, rather than species only native to Ghana and the nearby area.
 
-# References
+# 
