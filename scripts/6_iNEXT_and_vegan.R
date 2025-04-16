@@ -8,6 +8,11 @@ library(vegan)
 
 source(here('parameters.R'))
 
+
+# Earthcape formatting ----------------------------------------------------
+
+
+
 ec_individuals <- read_csv(
   here('data', 'earthcape_app_query', 'Individuals.csv')) %>%
   janitor::clean_names()
@@ -23,8 +28,18 @@ ec_transects <- read_csv(
 
 bold_organised <- read_csv(
   here('data', 'processed_data', 'our_organised_bold_data.csv')) %>%
-  mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol)) %>%
-  janitor::clean_names()
+  janitor::clean_names() %>%
+  mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol),
+         # convert all hyphens in 'field_id' to underscores
+         field_id = gsub('-', '_', field_id),
+         # for internal reasons, BOLD gave some of the field IDs a 'B' suffix.
+         # this never exists in our data, and messes up the matching of those 
+         # samples to our lot ID or transect ID. Remove them
+         field_id = gsub('B$', '', field_id)
+         ) 
+  
+  
+
 
 str(bold_organised)
 unique(bold_organised$field_id)
@@ -36,9 +51,6 @@ ec_referenced <- bold_organised %>%
   mutate(in_individuals = field_id %in% ec_individuals$unit_id,
          in_transects = field_id %in% ec_transects$name)
 
-# make a dataframe just containing samples that were missing
-unmatched <- ec_referenced %>%
-  filter(in_individuals == F & in_transects == F)
 
 # now a dataframe containing samples that matched both earthcape export-types
 duplicate_matches <- ec_referenced %>%
@@ -47,22 +59,35 @@ duplicate_matches <- ec_referenced %>%
 # Annoyingly in the data there seems to be a mix of hyphens and underscores
 # used as delimiters for transect names. They're mostly paired fine, but BOLD
 # has samples with field_id '2-MA-NE-2' but earthcape calls it '2_MA_NE_2'
-
-ec_referenced <- ec_referenced %>% 
-  mutate(better_field_id = 
-           # if the field_id is in neither individuals or transects
-           ifelse(in_individuals == F & in_transects == F, 
-                  # replace any hyphens with underscores
-                  gsub('-', '_', field_id),
-                  # else, return field_id unedited
-                  field_id)
-         )
+# 
+# ec_referenced <- ec_referenced %>% 
+#   mutate(better_field_id = 
+#            # if the field_id is in neither individuals or transects
+#            ifelse(in_individuals == F & in_transects == F, 
+#                   # replace any hyphens with underscores
+#                   gsub('-', '_', field_id),
+#                   # else, return field_id unedited
+#                   field_id)
+#          )
 str(ec_individuals)
 str(ec_transects)
 str(ec_lots)
 
 cat(ec_individuals %>% filter(is.na(lot)) %>% nrow(), 
     'rows of ec_individuals have NA values!')
+
+# make a dataframe just containing samples that were missing
+unmatched <- ec_referenced %>%
+  filter(in_individuals == F & in_transects == F)
+
+unmatched_field_ids <- unmatched %>%
+  group_by(field_id, project_code) %>%
+  summarise(nsamples = n())
+
+write_csv(unmatched_field_ids, file = here('data', 'processed_data', 
+                                           'unmatched_field_ids.csv'))
+
+
 
 duplicate_transects <- ec_transects %>% 
   group_by(name) %>% 
@@ -88,13 +113,16 @@ for_individuals <- ec_individuals %>%
   left_join(ec_lots, by = c("lot" = "lot_id")) %>%
   left_join(ec_transects, by = c("transect" = "name")) %>%
   select(lot, unit_id, transect, latitude.x, longitude.x,
-         date_time_start, direction.x, locality.x, type)
+         date, 
+         direction,
+         locality.x, 
+         type)
 
 for_transects <- ec_lots %>%
   rename(lot = lot_id) %>%
   left_join(ec_transects, by = c("transect" = "name")) %>%
   select(lot, transect, latitude.y, longitude.y,
-         date_time_start, direction.x, locality.x, type)
+         date, direction, locality.x, type)
 
 
 individual_referenced <- ec_referenced %>%
@@ -158,6 +186,12 @@ transect_referenced <- ec_referenced %>%
 # we can make a big df of all the earthcape-matched data
 too_many_cols <- bind_rows(individual_referenced, transect_referenced)
 
+# make a tibble of only rows from this that contain no trap type (so insects
+# which were not paired with a trap on earthcape)
+unpaired_insects <- too_many_cols %>%
+  filter(is.na(type))
+
+
 # as we know that some heath samples from BOLD weren't paired with a lot but 
 # with a transect, we know that they'll have an NA for the 'Lot' column,
 # but the transect will only have a single Heath trap used, so we can use 
@@ -183,6 +217,30 @@ too_many_cols <- too_many_cols %>%
 write_csv(too_many_cols, 
           file = here('data', 'processed_data', 
                       'bold_and_earthcape_combined.csv'))
+
+
+# Malaise trap debugging --------------------------------------------------
+
+malaise_trap_data <- too_many_cols %>% 
+  filter(type == 'Malaise') %>%
+  mutate(overall_lot = gsub('\\..+', '', lot))
+
+malaise_trap_sample_counts <- malaise_trap_data %>% 
+  group_by(overall_lot) %>%
+  summarise(n_arthropods = n())
+
+ggplot(malaise_trap_sample_counts, aes(x = n_arthropods))+
+  geom_histogram()
+
+dubious_malaise_trap_lots <- c(1000,1011,1099,567,577,586,604,835)
+
+trap_1 <- too_many_cols %>% filter(grepl(1000, lot)) %>%
+  select(lot, date, order, family, genus, species, field_id, transect) %>%
+  arrange(lot)
+
+# Plotting ----------------------------------------------------------------
+
+
 
 # make a very basic summary plot
 too_many_cols %>%
@@ -401,7 +459,7 @@ ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
 # grouping by the date-time start. Is this correct?
 visit_inext_tib <- too_many_cols %>%
   filter(!is.na(bin)) %>%
-  rename(date =date_time_start) %>%
+  #rename(date =date_time_start) %>%
   filter(!is.na(date)) %>%
   select(bin, order, date) %>%
   group_by_all() %>%
@@ -663,3 +721,22 @@ anova(family_bd) %>%
 # adonis_output <- adonis2(order_dist_mat ~ order_traptypes$type)
 # summary(adonis_output)
 #   
+
+
+
+# Malaise trap analyses ---------------------------------------------------
+
+# samples mostly have the date and time of deployment, apart from some samples
+# that only contain date. Exclude the samples that only have date data
+
+too_many_cols %>%
+  filter(type == 'Malaise') %>%
+  pull(date)
+
+
+# we have three types of analyses we can do: 
+# 1) how do the communities of individual traps change over their 24 hour deployment
+# 2) how do the traps accumulate BINs over their 5ish deployment intervals 
+#   (many iNEXT) analyses
+# 3) what overall temporal patterns are there in our species captures. E.g. Are there
+#     taxa only caught at night?
