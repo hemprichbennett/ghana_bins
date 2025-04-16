@@ -141,57 +141,6 @@ bold_field_data <- bold_data %>%
     # if it doesn't have a BIN we don't want it
     filter(!is.na(bin))
 
-# Summary tables ----------------------------------------------------------
-
-# read in some common names for each taxonomic order, for the benefit
-# of any readers who aren't yet familiar with the Ixodida or Strepsiptera...
-
-common_names <- read_csv('data/order_common_names.csv')
-
-summary_table <- bold_field_data %>%
-  filter(!is.na(order)) %>%
-  group_by(exact_site, order) %>%
-  summarise(`Number of samples sequenced` = n(), 
-            `Number of unique BINs found` = length(unique(bin))) %>%
-  ungroup() %>%
-  left_join(common_names) %>%
-  rename(`Taxonomic order` = 'order',
-         `English common name` = 'english_common_name') %>%
-  relocate(`English common name`, .after = `Taxonomic order`)
-
-
-summary_table
-
-# split the summary table into a list of two items, by sample site
-site_tables <- split(summary_table, f = summary_table$exact_site)
-
-# save the tables as csvs
-for(i in 1:length(site_tables)){
-  filename <- paste0('data/processed_data/', names(site_tables)[i], '_summary.csv')
-
-  site_tables[[i]] %>%
-    select(-exact_site) %>%
-    write_csv(., file = filename)
-}
-
-# make a table that's just the taxonomy of samples we collected
-
-
-
-# orders_and_families_sequenced <- bold_field_data %>%
-#   filter(!is.na(order) & !is.na(family)) %>%
-#   select(order, family) %>%
-#   distinct() %>%
-#   left_join(common_names) %>%
-#   select(order, english_common_name, family) %>%
-#   arrange(across(everything())) %>%
-#   rename(`Taxonomic Order` = order,
-#          `Taxonomic Order's english common name` = english_common_name, 
-#          `Taxonomic Family` = family)
-# 
-# family_common_names <- sci2comm(orders_and_families_sequenced$`Taxonomic Family`)
-# 
-# write_csv(orders_and_families_sequenced, file = 'results/orders_and_families_sequenced.csv')
 
 # Basic plotting ----------------------------------------------------------
 
