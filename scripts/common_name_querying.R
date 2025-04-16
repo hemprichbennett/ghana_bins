@@ -69,3 +69,13 @@ all_names_df <- automated_names_df %>%
 
 
 write_csv(all_names_df, file = 'results/taxonomic_and_common_names.csv')
+
+n_common_names <- nrow(order_common_names_tib) + nrow(family_common_names_tib) + 
+  nrow(genus_common_names_tib) + nrow(species_common_names_tib)
+cat('Number of common names found was', n_common_names, '\n')
+
+
+taxonomy_counts <- unique_taxonomy %>%
+  summarise(across(everything(), n_distinct))
+n_taxa <- sum(taxonomy_counts)
+cat('Number of unique taxonomic values was', n_taxa, '\n')
