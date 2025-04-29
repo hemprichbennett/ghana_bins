@@ -353,11 +353,19 @@ malaise_trap_sample_counts <- malaise_trap_data %>%
 ggplot(malaise_trap_sample_counts, aes(x = n_arthropods))+
   geom_histogram()
 
-dubious_malaise_trap_lots <- c(1000,1011,1099,567,577,586,604,835)
 
-trap_1 <- too_many_cols %>% filter(grepl(1000, lot)) %>%
-  select(lot, date, order, family, genus, species, field_id, transect) %>%
+dubious_malaise_trap_lots <- read_csv(here('data', 'raw_data', 
+                                           'malaise_trap_lots_to_query.csv')) %>%
+  pull(lot_id)
+
+trap_1 <- too_many_cols %>% filter(grepl(dubious_malaise_trap_lots[6], lot)) %>%
+  select(lot, date, order, family, genus, species, field_id, transect, type) %>%
   arrange(lot)
+
+exclusion_pattern <- paste0('^', paste(dubious_malaise_trap_lots, collapse = '\\..+|^'))
+
+bad_lots <- too_many_cols %>%
+  filter(grepl(exclusion_pattern, lot))
 
 # Basic plotting ----------------------------------------------------------
 
