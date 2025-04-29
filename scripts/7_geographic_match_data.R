@@ -162,3 +162,6 @@ ggsave(filename = here('figures', 'trap_bin_availability_wide.jpeg'),
        dpi = 600,
        plot = trap_bin_availability_wide, height = 10, width = 20)
 
+ggsave(filename = here('figures', 'fig_1_trap_bin_availability_wide.jpeg'),
+       dpi = 600,
+       plot = trap_bin_availability_wide, height = 10, width = 20)

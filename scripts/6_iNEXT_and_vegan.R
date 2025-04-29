@@ -9,234 +9,10 @@ library(vegan)
 source(here('parameters.R'))
 
 
-# Earthcape formatting ----------------------------------------------------
-
-
-
-ec_individuals <- read_csv(
-  here('data', 'earthcape_app_query', 'Individuals.csv')) %>%
-  janitor::clean_names()
-
-ec_lots <- read_csv(
-  here('data', 'earthcape_app_query', 'Lots.csv')) %>%
-  mutate(Type = tolower(Type)) %>%
-  janitor::clean_names()
-
-ec_transects <- read_csv(
-  here('data', 'earthcape_app_query', 'Transects.csv'))%>%
-  janitor::clean_names()
-
-bold_organised <- read_csv(
-  here('data', 'processed_data', 'our_organised_bold_data.csv')) %>%
-  janitor::clean_names() %>%
-  mutate(sampling_protocol = gsub('Heath Trap', 'heath', sampling_protocol),
-         # convert all hyphens in 'field_id' to underscores
-         field_id = gsub('-', '_', field_id),
-         # for internal reasons, BOLD gave some of the field IDs a 'B' suffix.
-         # this never exists in our data, and messes up the matching of those 
-         # samples to our lot ID or transect ID. Remove them
-         field_id = gsub('B$', '', field_id)
-         ) 
-  
-  
-
-
-str(bold_organised)
-unique(bold_organised$field_id)
-bold_organised$field_id %in% ec_individuals$unit_id
-
-# make a dataframe with a column saying if the field_id value was found in
-# individuals or transects
-ec_referenced <- bold_organised %>%
-  mutate(in_individuals = field_id %in% ec_individuals$unit_id,
-         in_transects = field_id %in% ec_transects$name)
-
-
-# now a dataframe containing samples that matched both earthcape export-types
-duplicate_matches <- ec_referenced %>%
-  filter(in_individuals == T & in_transects == T)
-
-# Annoyingly in the data there seems to be a mix of hyphens and underscores
-# used as delimiters for transect names. They're mostly paired fine, but BOLD
-# has samples with field_id '2-MA-NE-2' but earthcape calls it '2_MA_NE_2'
-# 
-# ec_referenced <- ec_referenced %>% 
-#   mutate(better_field_id = 
-#            # if the field_id is in neither individuals or transects
-#            ifelse(in_individuals == F & in_transects == F, 
-#                   # replace any hyphens with underscores
-#                   gsub('-', '_', field_id),
-#                   # else, return field_id unedited
-#                   field_id)
-#          )
-str(ec_individuals)
-str(ec_transects)
-str(ec_lots)
-
-cat(ec_individuals %>% filter(is.na(lot)) %>% nrow(), 
-    'rows of ec_individuals have NA values!')
-
-# make a dataframe just containing samples that were missing
-unmatched <- ec_referenced %>%
-  filter(in_individuals == F & in_transects == F)
-
-unmatched_field_ids <- unmatched %>%
-  group_by(field_id, project_code) %>%
-  summarise(nsamples = n())
-
-write_csv(unmatched_field_ids, file = here('data', 'processed_data', 
-                                           'unmatched_field_ids.csv'))
-
-
-
-duplicate_transects <- ec_transects %>% 
-  group_by(name) %>% 
-  summarise(n = n()) %>% 
-  filter(n >1 ) %>% 
-  pull(name)
-  
-cat("Transects", duplicate_transects, 'all have multiple rows!')
-
-ec_transects <- ec_transects %>%
-  filter(!name %in% duplicate_transects) %>%
-  select(-starts_with('date_'))
-
-ec_individuals <- ec_individuals %>%
-  filter(!is.na(lot))
-
-# The transects AND lots have date stamps and GPS coordinates, as there are 
-# multiple 'lots' per-transect. A transect is a set point from A to B, but 
-# there were multiple 'lots' (traps) set up along each. 
-
-
-for_individuals <- ec_individuals %>%
-  left_join(ec_lots, by = c("lot" = "lot_id")) %>%
-  left_join(ec_transects, by = c("transect" = "name")) %>%
-  select(lot, unit_id, transect, latitude.x, longitude.x,
-         date, 
-         direction,
-         locality.x, 
-         type)
-
-for_transects <- ec_lots %>%
-  rename(lot = lot_id) %>%
-  left_join(ec_transects, by = c("transect" = "name")) %>%
-  select(lot, transect, latitude.y, longitude.y,
-         date, direction, locality.x, type)
-
-
-individual_referenced <- ec_referenced %>%
-  filter(in_individuals == T) %>%
-  left_join(for_individuals, by = c("field_id" = "unit_id"))
-
-transect_referenced <- ec_referenced %>%
-  filter(in_transects == T) %>%
-  left_join(for_transects, by = c("field_id" = "transect", 
-                                  "sampling_protocol" = "type"))
-
-
-trap_transect_counts <- for_transects %>% 
-  group_by(type, transect) %>% 
-  summarise(n = n())
-
-# we had a problem that bold seemed to have named the field id by our transects,
-# but each transect has multiple individual sampling events on it. These
-# samples were all from heath traps, however
-
-
-n_heaths <- for_transects %>% 
-  filter(type == 'heath') %>% 
-  group_by(transect) %>% 
-  summarise(n = n())
-
-# get recorded instances of multiple heath traps per-transect
-
-duplicate_heaths <- for_transects %>%
-  filter(type == 'heath') %>%
-  group_by(transect) %>%
-  summarise(n_heaths = n()) %>%
-  filter(n_heaths >1) %>%
-  pull(transect)
-
-# if there are any duplicate heath traps, remove them
-
-for_transects <- for_transects %>%
-  # remove those for now, they can't be trusted
-  filter(!transect %in% duplicate_heaths)
-
-# Combine bold data with the ec data ------------------------------------------------
-
-
-
-individual_referenced <- ec_referenced %>%
-  filter(in_individuals == T) %>%
-  left_join(for_individuals, by = c("field_id" = "unit_id"))
-
-transect_referenced <- ec_referenced %>%
-  filter(in_transects == T) %>%
-  left_join(for_transects, by = c("field_id" = "transect", 
-                                  "sampling_protocol" = "type")) %>%
-  rename('type'= 'sampling_protocol')
-
-
-
-
-
-# if we ignore the issue of duplicate heaths for now, 
-# we can make a big df of all the earthcape-matched data
-too_many_cols <- bind_rows(individual_referenced, transect_referenced)
-
-# make a tibble of only rows from this that contain no trap type (so insects
-# which were not paired with a trap on earthcape)
-unpaired_insects <- too_many_cols %>%
-  filter(is.na(type))
-
-
-# as we know that some heath samples from BOLD weren't paired with a lot but 
-# with a transect, we know that they'll have an NA for the 'Lot' column,
-# but the transect will only have a single Heath trap used, so we can use 
-# the transect as an identifier instead
-
-too_many_cols <- too_many_cols %>%
-  mutate(sampling_event = ifelse(
-    # if there is no value for 'Lot' and it's a heath sample
-    is.na(lot) & type == "heath",
-    # use the Transect name from the field_id instead)
-    field_id,
-    # else use the lot, as its fine
-    lot)) %>%
-    # same for Type
-  mutate(type = ifelse(
-    is.na(type) & sampling_protocol == "heath",
-    sampling_protocol,
-    type
-  ),
-  type = str_to_title(type))
-
-# Save the huge df for reuse in further scripts
-write_csv(too_many_cols, 
+too_many_cols <- read_csv(, 
           file = here('data', 'processed_data', 
                       'bold_and_earthcape_combined.csv'))
 
-
-# Malaise trap debugging --------------------------------------------------
-
-malaise_trap_data <- too_many_cols %>% 
-  filter(type == 'Malaise') %>%
-  mutate(overall_lot = gsub('\\..+', '', lot))
-
-malaise_trap_sample_counts <- malaise_trap_data %>% 
-  group_by(overall_lot) %>%
-  summarise(n_arthropods = n())
-
-ggplot(malaise_trap_sample_counts, aes(x = n_arthropods))+
-  geom_histogram()
-
-dubious_malaise_trap_lots <- c(1000,1011,1099,567,577,586,604,835)
-
-trap_1 <- too_many_cols %>% filter(grepl(1000, lot)) %>%
-  select(lot, date, order, family, genus, species, field_id, transect) %>%
-  arrange(lot)
 
 # Plotting ----------------------------------------------------------------
 
@@ -436,6 +212,11 @@ ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
        height = 15,
        dpi = 600)
 
+ggsave(filename = here('figures', 'fig_2_type1_inext_plot.png'),
+       type1_inext_plot,
+       height = 15,
+       dpi = 600)
+
 ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
        type1_inext_plot,
        height = 15,
@@ -444,6 +225,11 @@ ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
 type2_inext_plot <- big_inext_plotting(input_list = inext_objs,
                                        inext_type = 2)
 ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
+       type2_inext_plot,
+       height = 15,
+       dpi = 600)
+
+ggsave(filename = here('figures', 'fig_3_type2_inext_plot.png'),
        type2_inext_plot,
        height = 15,
        dpi = 600)
@@ -515,7 +301,7 @@ write_csv(overall_chaorichness,
 
 # the number of samples classed to BIN/ not classed to BIN
 
-samples_with_bins <- bold_organised %>% 
+samples_with_bins <- too_many_cols %>% 
   mutate(has_bin = !is.na(bin)) %>%
   group_by(order, has_bin) %>%
   summarise(n = n()) %>%
@@ -649,6 +435,7 @@ family_nmds <- nmds(family_nmds_input, title_str = 'Family-level NMDS',
 
 family_nmds$nmds_plot
 ggsave(here('figures', 'nmds', 'family_nmds.png'), family_nmds$nmds_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_5_family_nmds.png'), family_nmds$nmds_plot, height = 12, width = 10)
 
 order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
                                          min_trap_threshold = nmds_inclusion_threshold)
@@ -658,6 +445,7 @@ order_nmds <- nmds(order_nmds_input,title_str = 'Order-level NMDS',
                    max_tries = 100)
 order_nmds$nmds_plot
 ggsave(here('figures', 'nmds', 'order_nmds.png'),order_nmds$nmds_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_4_order_nmds.png'),order_nmds$nmds_plot, height = 12, width = 10)
 
 
 
