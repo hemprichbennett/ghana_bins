@@ -26,12 +26,36 @@ malaise_trap_sample_counts <- all_arthropod_data %>%
   summarise(nsamples_sequenced = n())
 
 
-malaise_trap_bottle_counts <- malaise_trap_sample_counts %>%
+# get the number of different bottles per lot
+lot_bottle_counts <- all_arthropod_data %>%
+  filter(type == 'Malaise') %>%
+  select(lot) %>%
+  # make a column with just the overall lot number (e.g. '95' for 95.0 and 95.1)
   mutate(overall_lot = gsub('\\..+', '', lot)) %>%
   group_by(overall_lot) %>%
-  summarise(n_bottles = n()) %>%
-  group_by(n_bottles) %>%
-  summarise(n = n())
+  summarise(n_sublots = length(unique(lot)))
 
-ggplot(malaise_trap_bottle_counts, aes(x = n_bottles)) +
-  geom_histogram()
+
+# plot the number of sublots per lot
+ggplot(lot_bottle_counts, aes(x = n_sublots)) + 
+  geom_histogram() +
+  theme_bw()+
+  xlab('Number of bottles per lot')+
+  ylab('Count')
+
+# get the ids of lots with 4 or more bottles
+lots_to_use <- lot_bottle_counts %>%
+  filter(n_sublots >= 4)
+
+
+# filter all malaise trap data to retain only bottles from those lots
+malaise_trap_data_touse <- all_arthropod_data %>%
+  filter(type == 'Malaise') %>%
+  mutate(overall_lot = gsub('\\..+', '', lot)) %>%
+  filter(overall_lot %in% lots_to_use$overall_lot)
+
+
+# we now need a column giving a factor for if the bottle was deployed midnight-6AM,
+# 6AM - 12PM, 12PM - 6PM, 6PM - Midnight. We'll also need to collapse some of the
+# bottles together, as there are some that were deployed late morning-midday, with another bottle being
+# deployed 6AM - late morning the next day
