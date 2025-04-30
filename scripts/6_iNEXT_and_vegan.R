@@ -27,6 +27,10 @@ too_many_cols %>%
   geom_boxplot() +
   facet_wrap(.~ type, scales = 'free')
 
+bin_presence_summary <- too_many_cols %>%
+  mutate(has_bin = !is.na(bin)) %>%
+  group_by(type, has_bin) %>%
+  summarise(nsamples = n())
 
 tib_for_inext <- too_many_cols %>%
   filter(!is.na(bin)) %>%
@@ -128,10 +132,10 @@ for(trap_type in traptypes){
 
 # make a plot of ALL taxa
 
-alltaxa_trap_abundances <- tib_for_inext %>%
-  filter(!is.na(type)) %>%
-  group_by(bin, type) %>%
-  summarise(abundance = n())
+alltaxa_trap_abundances <- too_many_cols %>%
+  select(bin, type) %>%
+  group_by_all() %>%
+  summarise(nsamples = n())
 
 alltaxa_trap_for_inext <- list()
 for(trap in unique(alltaxa_trap_abundances$type)){
@@ -141,19 +145,23 @@ for(trap in unique(alltaxa_trap_abundances$type)){
   print(trap)
   n_individuals <- alltaxa_trap_abundances %>%
     filter(type == trap) %>%
-    pull(abundance) %>%
+    pull(nsamples) %>%
     sum()
   bin_abundances <- alltaxa_trap_abundances %>%
     filter(type == trap) %>%
-    pull(abundance) %>%
+    pull(nsamples) %>%
     sort(decreasing = T)
   alltaxa_trap_for_inext[[trap]] <- c(n_individuals, bin_abundances)
 }
 Sys.time()
+# this should run an iNEXT where the samples are the number of samples sequenced,
+# NOT the trapping effort
 z <- iNEXT(alltaxa_trap_for_inext, q=0, datatype="incidence_freq")
 Sys.time()
+rds_path <- here('data', 'processed_data', 'big_inext_object.RDS')
 saveRDS(object = z, 
-        file = here('data', 'processed_data', 'big_inext_object.RDS'))
+        file = rds_path)
+z <- readRDS(file = rds_path)
 alltaxa_gginext <- ggiNEXT(z, type=1, color.var="Assemblage")+ theme_bw()+
   theme(legend.position = 'bottom',
         text=element_text(size=20))+
