@@ -1,9 +1,26 @@
 library(tidyverse)
 library(here)
+library(hms)
 
 # read in data
 malaise_trap_deployments <- read_csv(here('data', 'processed_data', 
-                                          'temp_malaise_traps_edited_times.csv'))
+                                          'temp_malaise_traps_edited_times.csv')) %>%
+  janitor::clean_names() %>%
+  select(lot_id, bottle_start_time, bottle_end_time) %>%
+  rename(lot = lot_id,
+         bottle_start_datetime = bottle_start_time,
+         bottle_end_datetime = bottle_end_time) %>%
+  mutate(bottle_start_time = as_hms(bottle_start_datetime),
+         bottle_end_time = as_hms(bottle_end_datetime),
+         overall_lot = gsub('\\..+', '', lot),
+         # make a column giving the temporal classification of a bottle. This
+         # is necessary as lots of bottles were started at e.g. 10AM, and only
+         # ran until midday. They are to be pooled with samples from the 
+         # following day which ran from 6AM until e.g. 10AM, to give a full
+         # 6-hour window. So those initial 10-12 bottles are honorary parts of the
+         # 6AM bottles
+         start_classification = ifelse(bottle_start_time < as_hms('12:00:00') & bottle_start_time > as_hms("06:00:00"), 
+                                       "06:00:00", as.character(bottle_start_time)))
 
 all_arthropod_data <- read_csv(here('data', 'processed_data', 
                                     'bold_and_earthcape_combined.csv'))
@@ -49,13 +66,17 @@ lots_to_use <- lot_bottle_counts %>%
 
 
 # filter all malaise trap data to retain only bottles from those lots
-malaise_trap_data_touse <- all_arthropod_data %>%
+malaise_trap_data_to_use <- all_arthropod_data %>%
   filter(type == 'Malaise') %>%
   mutate(overall_lot = gsub('\\..+', '', lot)) %>%
-  filter(overall_lot %in% lots_to_use$overall_lot)
+  filter(overall_lot %in% lots_to_use$overall_lot) %>%
+  # add the temporally wrangled data from above
+  left_join(malaise_trap_deployments)
 
 
 # we now need a column giving a factor for if the bottle was deployed midnight-6AM,
 # 6AM - 12PM, 12PM - 6PM, 6PM - Midnight. We'll also need to collapse some of the
 # bottles together, as there are some that were deployed late morning-midday, with another bottle being
 # deployed 6AM - late morning the next day
+
+
