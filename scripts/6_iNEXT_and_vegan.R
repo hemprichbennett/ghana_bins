@@ -135,26 +135,30 @@ alltaxa_trap_abundances <- tib_for_inext %>%
 
 alltaxa_trap_for_inext <- list()
 for(trap in unique(alltaxa_trap_abundances$type)){
-  if(trap == 'Cdc'){
-    next()
-  }
+  # if(trap == 'Cdc'){
+  #   next()
+  # }
   print(trap)
-  # n_individuals <- alltaxa_trap_abundances %>%
-  #   filter(type == trap) %>%
-  #   pull(abundance) %>%
-  #   sum()
+  n_individuals <- alltaxa_trap_abundances %>%
+    filter(type == trap) %>%
+    pull(abundance) %>%
+    sum()
   bin_abundances <- alltaxa_trap_abundances %>%
     filter(type == trap) %>%
     pull(abundance) %>%
     sort(decreasing = T)
-  alltaxa_trap_for_inext[[trap]] <- bin_abundances
+  alltaxa_trap_for_inext[[trap]] <- c(n_individuals, bin_abundances)
 }
-
-z <- iNEXT(alltaxa_trap_for_inext, q=1, datatype="abundance")
+Sys.time()
+z <- iNEXT(alltaxa_trap_for_inext, q=0, datatype="incidence_freq")
+Sys.time()
+saveRDS(object = z, 
+        file = here('data', 'processed_data', 'big_inext_object.RDS'))
 alltaxa_gginext <- ggiNEXT(z, type=1, color.var="Assemblage")+ theme_bw()+
   theme(legend.position = 'bottom',
         text=element_text(size=20))+
-  ylab('BIN richness')
+  ylab('BIN richness')#+
+  #xlab('Number of individuals sequenced')
 
 
 alltaxa_gginext
