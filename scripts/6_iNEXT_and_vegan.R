@@ -133,6 +133,7 @@ for(trap_type in traptypes){
 # make a plot of ALL taxa
 
 alltaxa_trap_abundances <- too_many_cols %>%
+  filter(!is.na(type)) %>%
   select(bin, type) %>%
   group_by_all() %>%
   summarise(nsamples = n())
