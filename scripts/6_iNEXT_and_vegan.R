@@ -163,11 +163,17 @@ rds_path <- here('data', 'processed_data', 'big_inext_object.RDS')
 saveRDS(object = z, 
         file = rds_path)
 z <- readRDS(file = rds_path)
+options(scipen = 999)
 alltaxa_gginext <- ggiNEXT(z, type=1, color.var="Assemblage")+ theme_bw()+
   theme(legend.position = 'bottom',
         text=element_text(size=20))+
-  ylab('BIN richness')#+
-  #xlab('Number of individuals sequenced')
+  ylab('BIN richness')+
+  xlab('Number of individuals sequenced')+
+  # make ggplot use a thousands separator on the axis labels
+  scale_x_continuous(labels=function(x) format(x, big.mark = ",",
+                                               scientific = FALSE))+
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",",
+                                             scientific = FALSE))
 
 
 alltaxa_gginext
