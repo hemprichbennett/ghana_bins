@@ -106,7 +106,7 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
               trap_centroid = trap_centroid))
 }
 
-nmds_plot <- function(input_list, title_str = NA){
+nmds_plot <- function(input_list, title_str = NA, viridis_option = "D"){
   out_plot <- ggplot(data=input_list$scores,
                      aes(
     x=NMDS1,
@@ -117,8 +117,8 @@ nmds_plot <- function(input_list, title_str = NA){
     # add the centroid data
     geom_point(data=input_list$trap_centroid, size=5, shape=21, color="black",
                aes(fill=type), show.legend=FALSE)+
-    scale_colour_viridis_d()+
-    scale_fill_viridis_d()+
+    scale_colour_viridis_d(option = viridis_option)+
+    scale_fill_viridis_d(option = viridis_option)+
     #geom_text(data=site.scores,aes(x=NMDS1,y=NMDS2,label=sampling_event),size=6,vjust=0) +  # add the site labels
     #scale_colour_manual(values=c("A" = "red", "B" = "blue")) +
     #coord_equal() +
@@ -147,10 +147,11 @@ family_nmds <- nmds_analysis(family_nmds_input,
 
 
 family_plot <- nmds_plot(input_list = family_nmds,
-          title_str = 'Family-level NMDS')
+          title_str = 'Family-level NMDS',
+          viridis_option = 'B')
 
 
-
+family_plot
 
 ggsave(here('figures', 'nmds', 'family_nmds.png'), family_plot, height = 12, width = 10)
 ggsave(here('figures', 'fig_5_family_nmds.png'), family_plot, height = 12, width = 10)
@@ -161,11 +162,13 @@ order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_incl
 order_nmds <- nmds_analysis(order_nmds_input,title_str = 'Order-level NMDS',
                    min_tries = 20,
                    max_tries = 100)
-order_nmds$nmds_plot
+
 
 order_plot <- nmds_plot(input_list = order_nmds,
-                         title_str = 'Order-level NMDS')
+                         title_str = 'Order-level NMDS',
+                        viridis_option = 'B')
 
+order_plot
 
 ggsave(here('figures', 'nmds', 'order_nmds.png'),order_plot, height = 12, width = 10)
 ggsave(here('figures', 'fig_4_order_nmds.png'),order_plot, height = 12, width = 10)
@@ -180,9 +183,7 @@ order_centroid <- order_nmds$scores %>%
   summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
 
 
-order_nmds$nmds_plot +
-  geom_point(data=order_centroid, size=5, shape=21, color="black",
-             aes(fill=type), show.legend=FALSE)
+
 
 
 order_test <- adonis2(dist(order_nmds_input$trap_matrix)~order_nmds$scores$type, 
