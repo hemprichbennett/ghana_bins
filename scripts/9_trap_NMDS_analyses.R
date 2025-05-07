@@ -78,7 +78,7 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
 
 
 # function to do an NMDS and ggplot on a dataset made with the above function
-nmds <- function(input_list, k = 2, title_str = NA, min_tries = 20, max_tries = 20){
+nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
   big_nmds <- metaMDS(input_list$trap_matrix, # Our community-by-species matrix
                       k=k,# The number of reduced dimensions. Increase if high stress is problem. 
                       try = min_tries, 
@@ -100,11 +100,22 @@ nmds <- function(input_list, k = 2, title_str = NA, min_tries = 20, max_tries = 
     summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
   
   
-  print(trap_centroid)
-  out_plot <- ggplot(data=site.scores,aes(x=NMDS1,y=NMDS2,group=type)) + 
+
+  return(list(scores = site.scores, 
+              nmds_analysis = big_nmds,
+              trap_centroid = trap_centroid))
+}
+
+nmds_plot <- function(input_list, title_str = NA){
+  out_plot <- ggplot(data=input_list$scores,
+                     aes(
+    x=NMDS1,
+    y=NMDS2,
+    group=type)) + 
     stat_ellipse(show.legend=FALSE) +
     geom_point(aes(colour=type)) + # add the point markers
-    geom_point(data=trap_centroid, size=5, shape=21, color="black",
+    # add the centroid data
+    geom_point(data=input_list$trap_centroid, size=5, shape=21, color="black",
                aes(fill=type), show.legend=FALSE)+
     scale_colour_viridis_d()+
     scale_fill_viridis_d()+
@@ -120,8 +131,7 @@ nmds <- function(input_list, k = 2, title_str = NA, min_tries = 20, max_tries = 
     out_plot <- out_plot + 
       ggtitle(title_str)
   }
-  
-  return(list(nmds_plot = out_plot, scores = site.scores, nmds_analysis = big_nmds))
+  return(out_plot)
 }
 
 # Trap-type-based NMDS analyses ---------------------------------------------------------------
@@ -131,23 +141,34 @@ family_nmds_input <- nmds_input_generator('family',
                                           min_taxa_threshold = nmds_inclusion_threshold,
                                           min_trap_threshold = nmds_inclusion_threshold)
 
-family_nmds <- nmds(family_nmds_input, title_str = 'Family-level NMDS',
+family_nmds <- nmds_analysis(family_nmds_input, 
                     min_tries = 20,
                     max_tries = 100)
 
-family_nmds$nmds_plot
-ggsave(here('figures', 'nmds', 'family_nmds.png'), family_nmds$nmds_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_5_family_nmds.png'), family_nmds$nmds_plot, height = 12, width = 10)
+
+family_plot <- nmds_plot(input_list = family_nmds,
+          title_str = 'Family-level NMDS')
+
+
+
+
+ggsave(here('figures', 'nmds', 'family_nmds.png'), family_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_5_family_nmds.png'), family_plot, height = 12, width = 10)
 
 order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
                                          min_trap_threshold = nmds_inclusion_threshold)
 
-order_nmds <- nmds(order_nmds_input,title_str = 'Order-level NMDS',
+order_nmds <- nmds_analysis(order_nmds_input,title_str = 'Order-level NMDS',
                    min_tries = 20,
                    max_tries = 100)
 order_nmds$nmds_plot
-ggsave(here('figures', 'nmds', 'order_nmds.png'),order_nmds$nmds_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_4_order_nmds.png'),order_nmds$nmds_plot, height = 12, width = 10)
+
+order_plot <- nmds_plot(input_list = order_nmds,
+                         title_str = 'Order-level NMDS')
+
+
+ggsave(here('figures', 'nmds', 'order_nmds.png'),order_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_4_order_nmds.png'),order_plot, height = 12, width = 10)
 
 
 
