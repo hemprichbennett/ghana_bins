@@ -3,7 +3,10 @@ library(tidyverse)
 library(here)
 library(vegan)
 
-habitat_data <- read_csv('data/raw_data/lot_habitat_classifications.csv')
+habitat_data <- read_csv('data/raw_data/lot_habitat_classifications.csv') %>%
+  janitor::clean_names() %>%
+  rename(lot = name, habitat_type = name_2) %>%
+  select(lot, habitat_type)
 
 source(here('parameters.R'))
 
@@ -12,6 +15,12 @@ too_many_cols <- read_csv(,
                           file = here('data', 'processed_data', 
                                       'bold_and_earthcape_combined.csv'))
 
+too_many_cols <- left_join(too_many_cols, habitat_data)
+
+# check for lots which were not matched
+unmatched_rows <- anti_join(too_many_cols, habitat_data)
+
+unmatched_rows$lot
 
 # Functions ---------------------------------------------------------------
 
@@ -41,7 +50,7 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
     as.matrix(.)
   
   trap_types <- too_many_cols %>%
-    select(sampling_event, type) %>%
+    select(sampling_event, type, habitat_type) %>%
     distinct() %>%
     slice(order(factor(sampling_event, levels = rownames(out_mat))))
   
@@ -202,3 +211,10 @@ anova(family_bd) %>%
 # adonis_output <- adonis2(order_dist_mat ~ order_traptypes$type)
 # summary(adonis_output)
 #   
+
+
+
+
+# Habitat-based NMDS analyses ---------------------------------------------
+
+
