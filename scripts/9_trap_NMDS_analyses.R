@@ -13,7 +13,7 @@ too_many_cols <- read_csv(,
                                       'bold_and_earthcape_combined.csv'))
 
 
-# NMDS time ---------------------------------------------------------------
+# Functions ---------------------------------------------------------------
 
 nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
                                  min_trap_threshold = NA){
@@ -68,14 +68,6 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
 
 
 
-
-
-# big_nmds <- metaMDS(family_nmds_dataset$trap_matrix, # Our community-by-species matrix
-#                                  k=2) # The number of reduced dimensions. Increase if high stress is problem. 
-# ### Make a better ordination, using tutorial from https://chrischizinski.github.io/rstats/vegan-ggplot2/
-# # base R plot, as a starting point
-# plot(big_nmds, type = "t")
-
 # function to do an NMDS and ggplot on a dataset made with the above function
 nmds <- function(input_list, k = 2, title_str = NA, min_tries = 20, max_tries = 20){
   big_nmds <- metaMDS(input_list$trap_matrix, # Our community-by-species matrix
@@ -122,6 +114,9 @@ nmds <- function(input_list, k = 2, title_str = NA, min_tries = 20, max_tries = 
   
   return(list(nmds_plot = out_plot, scores = site.scores, nmds_analysis = big_nmds))
 }
+
+# Trap-type-based NMDS analyses ---------------------------------------------------------------
+
 
 family_nmds_input <- nmds_input_generator('family', 
                                           min_taxa_threshold = nmds_inclusion_threshold,
