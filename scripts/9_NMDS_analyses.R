@@ -117,7 +117,8 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
   return(list(scores = site.scores, 
               nmds_analysis = big_nmds,
               trap_centroid = trap_centroid,
-              habitat_centroid = habitat_centroid))
+              habitat_centroid = habitat_centroid,
+              dist_mat = dist_mat))
 }
 
 nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
@@ -198,7 +199,7 @@ ggsave(here('figures', 'fig_5_family_trap_nmds.png'), family_trap_plot, height =
 
 family_habitat_plot <- nmds_plot(input_list = family_nmds,
                               title_str = 'Family-level NMDS',
-                              viridis_option = 'B',
+                              viridis_option = 'D',
                               plot_by = 'habitat_type')
 
 
@@ -221,7 +222,7 @@ order_nmds <- nmds_analysis(order_nmds_input,
 
 order_trap_plot <- nmds_plot(input_list = order_nmds,
                          title_str = 'Order-level NMDS',
-                        viridis_option = 'C',
+                        viridis_option = 'B',
                         plot_by = 'trap_type')
 
 order_trap_plot
@@ -233,7 +234,7 @@ ggsave(here('figures', 'fig_4_order_trap_nmds.png'),order_trap_plot, height = 12
 
 order_habitat_plot <- nmds_plot(input_list = order_nmds,
                              title_str = 'Order-level NMDS',
-                             viridis_option = 'B',
+                             viridis_option = 'D',
                              plot_by = 'habitat_type')
 
 order_habitat_plot
