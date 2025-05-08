@@ -165,16 +165,18 @@ family_nmds <- nmds_analysis(family_nmds_input,
                     max_tries = 100)
 
 
-family_plot <- nmds_plot(input_list = family_nmds,
+family_trap_plot <- nmds_plot(input_list = family_nmds,
           title_str = 'Family-level NMDS',
           viridis_option = 'B',
           plot_by = 'trap_type')
 
 
-family_plot
+family_trap_plot
 
-ggsave(here('figures', 'nmds', 'family_nmds.png'), family_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_5_family_nmds.png'), family_plot, height = 12, width = 10)
+ggsave(here('figures', 'nmds', 'family_trap_nmds.png'), family_trap_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_5_family_trap_nmds.png'), family_trap_plot, height = 12, width = 10)
+
+
 
 order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
                                          min_trap_threshold = nmds_inclusion_threshold)
@@ -184,15 +186,15 @@ order_nmds <- nmds_analysis(order_nmds_input,
                    max_tries = 100)
 
 
-order_plot <- nmds_plot(input_list = order_nmds,
+order_trap_plot <- nmds_plot(input_list = order_nmds,
                          title_str = 'Order-level NMDS',
                         viridis_option = 'B',
                         plot_by = 'trap_type')
 
-order_plot
+order_trap_plot
 
-ggsave(here('figures', 'nmds', 'order_nmds.png'),order_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_4_order_nmds.png'),order_plot, height = 12, width = 10)
+ggsave(here('figures', 'nmds', 'order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_4_order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
 
 
 # Pat Schloss's tutorial at https://www.youtube.com/watch?v=oLf0EpMJ4yA is good
