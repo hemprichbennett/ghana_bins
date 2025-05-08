@@ -140,12 +140,13 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
                      aes(
     x=NMDS1,
     y=NMDS2,
-    group=!!plot_by)) + 
+    group=!!plot_by,
+    shape=!!plot_by)) + 
     stat_ellipse(show.legend=FALSE) +
     geom_point(aes(colour=!!plot_by)) + # add the point markers
     # add the centroid data
-    geom_point(data=centroids_to_use, size=5, shape=21, color="black",
-               aes(fill=!!plot_by), show.legend=FALSE)+
+    geom_point(data=centroids_to_use, size=5,# color="black",
+               aes(colour=!!plot_by, fill = !!plot_by, shape=!!plot_by), show.legend=FALSE)+
     scale_colour_viridis_d(option = viridis_option)+
     scale_fill_viridis_d(option = viridis_option)+
     #geom_text(data=site.scores,aes(x=NMDS1,y=NMDS2,label=sampling_event),size=6,vjust=0) +  # add the site labels
@@ -154,7 +155,7 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
     theme_bw()+
     theme(legend.position = 'bottom',
           text=element_text(size=30))+
-    labs(colour = legend_str)+
+    labs(colour = legend_str, shape = legend_str)+
     # increase point size in legend
     guides(colour = guide_legend(override.aes = list(size=10)))
   
@@ -256,7 +257,10 @@ order_centroid <- order_nmds$scores %>%
 
 
 
+z <- order_nmds$nmds_analysis$dist
+temp_dist <- vegdist(order_nmds_input$trap_matrix)
 
+metaMDS(temp_dist)
 
 order_test <- adonis2(as.dist(order_nmds_input$trap_matrix)~
                         order_nmds$scores$trap_type , 
