@@ -73,6 +73,11 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
     out_mat <- out_mat[-badrows,]
   }
   
+  # remove from the trap_types object any rows which no longer have a 
+  # corresponding value in the output matrix, they mess up analyses later
+  trap_types <- trap_types %>%
+    filter(sampling_event %in% rownames(out_mat))
+  
   return(list(trap_matrix = out_mat, 
               trap_types = trap_types))
 }
@@ -236,6 +241,8 @@ ggsave(here('figures', 'fig_8_order_habitat_nmds.png'),order_habitat_plot, heigh
 
 # Pat Schloss's tutorial at https://www.youtube.com/watch?v=oLf0EpMJ4yA is good
 
+
+## order-level analyses
 order_centroid <- order_nmds$scores %>%
   group_by(trap_type) %>%
   summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
@@ -250,6 +257,9 @@ order_test <- adonis2(dist(order_nmds_input$trap_matrix)~order_nmds$scores$trap_
 order_test %>%
   broom::tidy() %>%
   write_csv(here('results', 'adonis', 'order_summary.csv'))
+
+
+## family-level analyses
 
 family_test <- adonis2(dist(family_nmds_input$trap_matrix)~family_nmds$scores$trap_type, 
                        permutations = 1e4)
