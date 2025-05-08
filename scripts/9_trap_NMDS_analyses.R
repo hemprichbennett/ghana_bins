@@ -100,11 +100,15 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
     group_by(trap_type) %>%
     summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
   
+  habitat_centroid <- site.scores %>%
+    group_by(habitat_type) %>%
+    summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
   
 
   return(list(scores = site.scores, 
               nmds_analysis = big_nmds,
-              trap_centroid = trap_centroid))
+              trap_centroid = trap_centroid,
+              habitat_centroid = habitat_centroid))
 }
 
 nmds_plot <- function(input_list, title_str = NA, viridis_option = "D"){
