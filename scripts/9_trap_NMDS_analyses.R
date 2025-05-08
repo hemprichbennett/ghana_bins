@@ -111,17 +111,30 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
               habitat_centroid = habitat_centroid))
 }
 
-nmds_plot <- function(input_list, title_str = NA, viridis_option = "D"){
+nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
+                      plot_by){
+  if(!plot_by %in% c('trap_type', 'habitat_type')){
+    stop('Acceptable plot_by variables are trap and habitat')
+  }
+  
+  plot_by <- sym(plot_by)
+  
+  if(plot_by == 'trap_type'){
+    centroids_to_use <- input_list$trap_centroid
+  }else if(plot_by == 'habitat_type'){
+    centroids_to_use <- input_list$habitat_centroid
+  }
+  
   out_plot <- ggplot(data=input_list$scores,
                      aes(
     x=NMDS1,
     y=NMDS2,
-    group=trap_type)) + 
+    group=!!plot_by)) + 
     stat_ellipse(show.legend=FALSE) +
-    geom_point(aes(colour=trap_type)) + # add the point markers
+    geom_point(aes(colour=!!plot_by)) + # add the point markers
     # add the centroid data
-    geom_point(data=input_list$trap_centroid, size=5, shape=21, color="black",
-               aes(fill=trap_type), show.legend=FALSE)+
+    geom_point(data=centroids_to_use, size=5, shape=21, color="black",
+               aes(fill=!!plot_by), show.legend=FALSE)+
     scale_colour_viridis_d(option = viridis_option)+
     scale_fill_viridis_d(option = viridis_option)+
     #geom_text(data=site.scores,aes(x=NMDS1,y=NMDS2,label=sampling_event),size=6,vjust=0) +  # add the site labels
@@ -139,6 +152,7 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D"){
   return(out_plot)
 }
 
+
 # Trap-type-based NMDS analyses ---------------------------------------------------------------
 
 
@@ -153,7 +167,8 @@ family_nmds <- nmds_analysis(family_nmds_input,
 
 family_plot <- nmds_plot(input_list = family_nmds,
           title_str = 'Family-level NMDS',
-          viridis_option = 'B')
+          viridis_option = 'B',
+          plot_by = 'trap_type')
 
 
 family_plot
@@ -164,21 +179,20 @@ ggsave(here('figures', 'fig_5_family_nmds.png'), family_plot, height = 12, width
 order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
                                          min_trap_threshold = nmds_inclusion_threshold)
 
-order_nmds <- nmds_analysis(order_nmds_input,title_str = 'Order-level NMDS',
+order_nmds <- nmds_analysis(order_nmds_input,
                    min_tries = 20,
                    max_tries = 100)
 
 
 order_plot <- nmds_plot(input_list = order_nmds,
                          title_str = 'Order-level NMDS',
-                        viridis_option = 'B')
+                        viridis_option = 'B',
+                        plot_by = 'trap_type')
 
 order_plot
 
 ggsave(here('figures', 'nmds', 'order_nmds.png'),order_plot, height = 12, width = 10)
 ggsave(here('figures', 'fig_4_order_nmds.png'),order_plot, height = 12, width = 10)
-
-
 
 
 # Pat Schloss's tutorial at https://www.youtube.com/watch?v=oLf0EpMJ4yA is good
