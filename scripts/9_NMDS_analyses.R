@@ -86,7 +86,10 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
 
 # function to do an NMDS and ggplot on a dataset made with the above function
 nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
-  big_nmds <- metaMDS(input_list$trap_matrix, # Our community-by-species matrix
+  
+  dist_mat <- vegdist(input_list$trap_matrix)
+  
+  big_nmds <- metaMDS(dist_mat, # Our community-by-species matrix
                       k=k,# The number of reduced dimensions. Increase if high stress is problem. 
                       try = min_tries, 
                       trymax = max_tries) 
@@ -127,8 +130,10 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
   
   if(plot_by == 'trap_type'){
     centroids_to_use <- input_list$trap_centroid
+    legend_str = "Trap type"
   }else if(plot_by == 'habitat_type'){
     centroids_to_use <- input_list$habitat_centroid
+    legend_str = "Habitat type"
   }
   
   out_plot <- ggplot(data=input_list$scores,
@@ -149,7 +154,9 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
     theme_bw()+
     theme(legend.position = 'bottom',
           text=element_text(size=30))+
-    labs(colour = 'Trap type')
+    labs(colour = legend_str)+
+    # increase point size in legend
+    guides(colour = guide_legend(override.aes = list(size=10)))
   
   if(!is.na(title_str)){
     out_plot <- out_plot + 
@@ -213,7 +220,7 @@ order_nmds <- nmds_analysis(order_nmds_input,
 
 order_trap_plot <- nmds_plot(input_list = order_nmds,
                          title_str = 'Order-level NMDS',
-                        viridis_option = 'B',
+                        viridis_option = 'C',
                         plot_by = 'trap_type')
 
 order_trap_plot
@@ -251,8 +258,13 @@ order_centroid <- order_nmds$scores %>%
 
 
 
-order_test <- adonis2(dist(order_nmds_input$trap_matrix)~order_nmds$scores$trap_type, 
+order_test <- adonis2(as.dist(order_nmds_input$trap_matrix)~
+                        order_nmds$scores$trap_type , 
                       permutations = 1e4)
+
+
+order_test %>%
+  broom::tidy()
 
 order_test %>%
   broom::tidy() %>%
@@ -289,22 +301,5 @@ anova(family_bd) %>%
   tidy() %>%
   write_csv(here('results', 'adonis', 'family_betadispersion.csv'))
 
-# There is, yes
-
-# 
-# order_dist_mat <- vegdist(order_nmds_input$trap_matrix) %>%
-#   as.matrix()
-# 
-# order_traptypes <- order_nmds_input$trap_types %>%
-#   filter(sampling_event %in% colnames(order_dist_mat))
-# 
-# adonis_output <- adonis2(order_dist_mat ~ order_traptypes$trap_type)
-# summary(adonis_output)
-#   
-
-
-
-
-# Habitat-based NMDS analyses ---------------------------------------------
 
 
