@@ -6,7 +6,8 @@ library(vegan)
 habitat_data <- read_csv('data/raw_data/lot_habitat_classifications.csv') %>%
   janitor::clean_names() %>%
   rename(lot = name, habitat_type = name_2) %>%
-  select(lot, habitat_type)
+  select(lot, habitat_type) %>%
+  mutate(habitat_type = gsub('^Natural$', 'Semi-natural', habitat_type))
 
 source(here('parameters.R'))
 
@@ -153,8 +154,10 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
 }
 
 
-# Trap-type-based NMDS analyses ---------------------------------------------------------------
+# NMDS analyses ---------------------------------------------------------------
 
+
+## Family-level
 
 family_nmds_input <- nmds_input_generator('family', 
                                           min_taxa_threshold = nmds_inclusion_threshold,
@@ -164,6 +167,7 @@ family_nmds <- nmds_analysis(family_nmds_input,
                     min_tries = 20,
                     max_tries = 100)
 
+### trapwise plots
 
 family_trap_plot <- nmds_plot(input_list = family_nmds,
           title_str = 'Family-level NMDS',
@@ -177,6 +181,21 @@ ggsave(here('figures', 'nmds', 'family_trap_nmds.png'), family_trap_plot, height
 ggsave(here('figures', 'fig_5_family_trap_nmds.png'), family_trap_plot, height = 12, width = 10)
 
 
+### habitatwise plots
+
+family_habitat_plot <- nmds_plot(input_list = family_nmds,
+                              title_str = 'Family-level NMDS',
+                              viridis_option = 'B',
+                              plot_by = 'habitat_type')
+
+
+family_habitat_plot
+
+ggsave(here('figures', 'nmds', 'family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_7_family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
+
+
+## Order-level
 
 order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
                                          min_trap_threshold = nmds_inclusion_threshold)
@@ -185,6 +204,7 @@ order_nmds <- nmds_analysis(order_nmds_input,
                    min_tries = 20,
                    max_tries = 100)
 
+## trapwise plots
 
 order_trap_plot <- nmds_plot(input_list = order_nmds,
                          title_str = 'Order-level NMDS',
@@ -195,6 +215,23 @@ order_trap_plot
 
 ggsave(here('figures', 'nmds', 'order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
 ggsave(here('figures', 'fig_4_order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
+
+## habitatwise plots
+
+order_habitat_plot <- nmds_plot(input_list = order_nmds,
+                             title_str = 'Order-level NMDS',
+                             viridis_option = 'B',
+                             plot_by = 'habitat_type')
+
+order_habitat_plot
+
+ggsave(here('figures', 'nmds', 'order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_8_order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
+
+
+
+# Analyses ----------------------------------------------------------------
+
 
 
 # Pat Schloss's tutorial at https://www.youtube.com/watch?v=oLf0EpMJ4yA is good
