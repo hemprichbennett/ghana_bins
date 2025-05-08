@@ -258,15 +258,15 @@ order_centroid <- order_nmds$scores %>%
 
 
 
-z <- order_nmds$nmds_analysis$dist
-temp_dist <- vegdist(order_nmds_input$trap_matrix)
+# z <- order_nmds$nmds_analysis$dist
+# temp_dist <- vegdist(order_nmds_input$trap_matrix)
+# 
+# metaMDS(temp_dist)
 
-metaMDS(temp_dist)
+order_test <- adonis2(order_nmds$dist_mat~ order_nmds$scores$trap_type + order_nmds$scores$habitat_type, 
+                      permutations = 1e3, by = 'terms')
 
-order_test <- adonis2(as.dist(order_nmds_input$trap_matrix)~
-                        order_nmds$scores$trap_type , 
-                      permutations = 1e4)
-
+order_test
 
 order_test %>%
   broom::tidy()
@@ -278,8 +278,10 @@ order_test %>%
 
 ## family-level analyses
 
-family_test <- adonis2(dist(family_nmds_input$trap_matrix)~family_nmds$scores$trap_type, 
-                       permutations = 1e4)
+family_test <- adonis2(family_nmds$dist_mat~family_nmds$scores$trap_type + family_nmds$scores$habitat_type, 
+                       permutations = 1e3, by = 'terms')
+
+family_test
 
 family_test %>%
   broom::tidy() %>%
