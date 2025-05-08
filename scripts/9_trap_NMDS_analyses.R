@@ -13,7 +13,8 @@ source(here('parameters.R'))
 
 too_many_cols <- read_csv(, 
                           file = here('data', 'processed_data', 
-                                      'bold_and_earthcape_combined.csv'))
+                                      'bold_and_earthcape_combined.csv')) %>%
+  rename(trap_type = type)
 
 too_many_cols <- left_join(too_many_cols, habitat_data)
 
@@ -50,7 +51,7 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
     as.matrix(.)
   
   trap_types <- too_many_cols %>%
-    select(sampling_event, type, habitat_type) %>%
+    select(sampling_event, trap_type, habitat_type) %>%
     distinct() %>%
     slice(order(factor(sampling_event, levels = rownames(out_mat))))
   
@@ -96,7 +97,7 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
   species.scores$species <- rownames(species.scores)  # create a column of species, from the rownames of species.scores
   
   trap_centroid <- site.scores %>%
-    group_by(type) %>%
+    group_by(trap_type) %>%
     summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
   
   
@@ -111,12 +112,12 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D"){
                      aes(
     x=NMDS1,
     y=NMDS2,
-    group=type)) + 
+    group=trap_type)) + 
     stat_ellipse(show.legend=FALSE) +
-    geom_point(aes(colour=type)) + # add the point markers
+    geom_point(aes(colour=trap_type)) + # add the point markers
     # add the centroid data
     geom_point(data=input_list$trap_centroid, size=5, shape=21, color="black",
-               aes(fill=type), show.legend=FALSE)+
+               aes(fill=trap_type), show.legend=FALSE)+
     scale_colour_viridis_d(option = viridis_option)+
     scale_fill_viridis_d(option = viridis_option)+
     #geom_text(data=site.scores,aes(x=NMDS1,y=NMDS2,label=sampling_event),size=6,vjust=0) +  # add the site labels
@@ -179,21 +180,21 @@ ggsave(here('figures', 'fig_4_order_nmds.png'),order_plot, height = 12, width = 
 # Pat Schloss's tutorial at https://www.youtube.com/watch?v=oLf0EpMJ4yA is good
 
 order_centroid <- order_nmds$scores %>%
-  group_by(type) %>%
+  group_by(trap_type) %>%
   summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
 
 
 
 
 
-order_test <- adonis2(dist(order_nmds_input$trap_matrix)~order_nmds$scores$type, 
+order_test <- adonis2(dist(order_nmds_input$trap_matrix)~order_nmds$scores$trap_type, 
                       permutations = 1e4)
 
 order_test %>%
   broom::tidy() %>%
   write_csv(here('results', 'adonis', 'order_summary.csv'))
 
-family_test <- adonis2(dist(family_nmds_input$trap_matrix)~family_nmds$scores$type, 
+family_test <- adonis2(dist(family_nmds_input$trap_matrix)~family_nmds$scores$trap_type, 
                        permutations = 1e4)
 
 family_test %>%
@@ -206,7 +207,7 @@ order_test$aov.tab
 
 # test for betadispersion
 library(broom)
-order_bd <- betadisper(dist(order_nmds_input$trap_matrix), order_nmds$scores$type)
+order_bd <- betadisper(dist(order_nmds_input$trap_matrix), order_nmds$scores$trap_type)
 # is the data betadispersed? ("Is there difference in within-group variation 
 # between groups." I think.)
 anova(order_bd) %>%
@@ -214,7 +215,7 @@ anova(order_bd) %>%
   write_csv(here('results', 'adonis', 'order_betadispersion.csv'))
 
 
-family_bd <- betadisper(dist(family_nmds_input$trap_matrix), family_nmds$scores$type)
+family_bd <- betadisper(dist(family_nmds_input$trap_matrix), family_nmds$scores$trap_type)
 # is the data betadispersed? ("Is there difference in within-group variation 
 # between groups." I think.)
 anova(family_bd) %>%
@@ -230,7 +231,7 @@ anova(family_bd) %>%
 # order_traptypes <- order_nmds_input$trap_types %>%
 #   filter(sampling_event %in% colnames(order_dist_mat))
 # 
-# adonis_output <- adonis2(order_dist_mat ~ order_traptypes$type)
+# adonis_output <- adonis2(order_dist_mat ~ order_traptypes$trap_type)
 # summary(adonis_output)
 #   
 
