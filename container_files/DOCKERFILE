@@ -10,6 +10,6 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   libcurl4-openssl-dev libglpk-dev \
   && rm -rf /var/lib/apt/lists/* \
-  && R -q -e 'install.packages(c("iNEXT", "bold", "janitor", "countrycode", "taxize", "here", "vegan", "devtools")); devtools::install_github("https://github.com/boldsystems-central/BOLDconnectR")'
+  && R -q -e 'install.packages(c("iNEXT", "bold", "janitor", "countrycode", "taxize", "here", "vegan", "broom.mixed"))")'
 
 WORKDIR /home/rstudio
