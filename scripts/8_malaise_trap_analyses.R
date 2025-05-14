@@ -19,8 +19,17 @@ malaise_trap_deployments <- read_csv(here('data', 'processed_data',
          # following day which ran from 6AM until e.g. 10AM, to give a full
          # 6-hour window. So those initial 10-12 bottles are honorary parts of the
          # 6AM bottles
+         start_classification = ifelse(bottle_start_time < as_hms('06:00:00'), 
+                                      "00:00:00", as.character(bottle_start_time)),
          start_classification = ifelse(bottle_start_time < as_hms('12:00:00') & bottle_start_time > as_hms("06:00:00"), 
-                                       "06:00:00", as.character(bottle_start_time)))
+                                       "06:00:00", start_classification),
+         start_classification = ifelse(bottle_start_time < as_hms('18:00:00') & bottle_start_time > as_hms("12:00:00"), 
+                                       "12:00:00", start_classification),
+         start_classification = ifelse(bottle_start_time > as_hms("18:00:00"), 
+                                       "18:00:00", start_classification),
+         start_classification = ifelse(bottle_start_time < as_hms('06:00:00'), 
+                                       "00:00:00", start_classification)
+         )
 
 all_arthropod_data <- read_csv(here('data', 'processed_data', 
                                     'bold_and_earthcape_combined.csv'))
@@ -79,4 +88,50 @@ malaise_trap_data_to_use <- all_arthropod_data %>%
 # bottles together, as there are some that were deployed late morning-midday, with another bottle being
 # deployed 6AM - late morning the next day
 
+
+malaise_trap_data_to_use %>%
+  count(start_classification)
+
+missing_values <- malaise_trap_data_to_use %>%
+  filter(is.na(start_classification)) %>%
+  select(lot, overall_lot, start_classification, bottle_start_time, bottle_start_datetime, bottle_end_time, bottle_end_datetime)
+
+
+
+trap_abundance <- malaise_trap_data_to_use %>%
+  # remove any bottles with no time found (the ones in missing_values)
+  filter(!is.na(start_classification)) %>%
+  group_by(overall_lot, start_classification) %>%
+  summarise(`Number of insects captured` = n(),
+            `Number of unique BINs` = length(unique(bin))) %>%
+  pivot_longer(cols = c(`Number of insects captured`, `Number of unique BINs`), names_to = 'variable_type', 
+               values_to = 'variable_result')
+
+
+# Basic boxplot of results ------------------------------------------------
+
+
+ggplot(trap_abundance, aes(x = start_classification, y = variable_result))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_wrap(. ~variable_type, scales = 'free_y', 
+             # put the facet labels on the left of the subplots
+             switch = 'left')+
+  # put the facet labels outside of the axis markers, to serve as axis labels
+  theme(strip.placement = "outside",
+        # make the facet labels have a white background
+        strip.background =element_rect(fill="white"),
+        # remove redundant y-axis label
+        axis.title.y = element_blank()
+        )+
+  xlab('Bottle start time')
+
+library(nlme)
+
+test_model <- nlme::lme(variable_result ~ start_classification, 
+          random = ~ start_classification | overall_lot,
+          data = filter(trap_abundance, 
+                        variable_type == 'Number of insects captured'))
+
+summary(test_model)
 
