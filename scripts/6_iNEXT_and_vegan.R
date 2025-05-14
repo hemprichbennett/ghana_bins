@@ -61,17 +61,16 @@ inext_plots <- list()
 inext_plots[['completeness']] <- list()
 inext_plots[['extrapolation']] <- list()
 for(trap_type in traptypes){
-  #cat(o, '\n')
   for_inext_list[[trap_type]] <- list()
-  n_events <- tib_for_inext %>%
-    filter(type == trap_type) %>%
-    pull(sampling_event) %>%
-    unique() %>%
-    length()
+  # n_events <- tib_for_inext %>%
+  #   filter(type == trap_type) %>%
+  #   pull(sampling_event) %>%
+  #   unique() %>%
+  #   length()
   for(o in desired_orders){
     cat('trap type is ', trap_type, '\n')
     
-    cat('order is ', o, 'trap type is ', trap_type, ' number of sampling events was', n_events, '\n')
+    #cat('order is ', o, 'trap type is ', trap_type, ' number of sampling events was', n_events, '\n')
     incidence_freq <- tib_for_inext %>%
       filter(type == trap_type) %>%
       filter(order == o) %>%
@@ -80,12 +79,13 @@ for(trap_type in traptypes){
       pull(freq) %>%
       sort(decreasing = T)
     
+    n_sequenced <- sum(incidence_freq)
     
     # if there are fewer than nbin_threshold unique BINs in this
     # trap type , discard the order, otherwise save it for analysis
     
     if(length(incidence_freq) >= nbin_threshold){
-      for_inext_list[[trap_type]][[o]] <- c(n_events, incidence_freq)
+      for_inext_list[[trap_type]][[o]] <- c(n_sequenced, incidence_freq)
     }
     
   }
@@ -216,7 +216,7 @@ big_inext_plotting <- function(input_list, inext_type){
     guides(linetype = guide_legend(order=1),
            fill = guide_legend(order=2, title = NULL))+
     theme(legend.position = 'bottom')+
-    labs(x = 'Number of traps', y = yaxis_text)
+    labs(x = 'Number of individual insects from order sequenced', y = yaxis_text)
   
   
   return(inext_plot)
