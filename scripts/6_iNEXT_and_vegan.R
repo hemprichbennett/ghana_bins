@@ -96,7 +96,7 @@ for(trap_type in traptypes){
                                   # of how often a given BIN is detected at least once in 
                                   # a sample, not the number of occurrences of that BIN
                       datatype = 'incidence_freq',
-                      size = round(seq(1,n_events*4, by = n_events/10)),
+                      size = round(seq(1,8000, by = 100)),
                       se=T)
   
   
@@ -177,7 +177,8 @@ alltaxa_gginext <- ggiNEXT(z, type=1, color.var="Assemblage")+ theme_bw()+
 
 
 alltaxa_gginext
-ggsave(alltaxa_gginext, file = here('figures', 'inext_plots', 'alltaxa_plot.png'))
+ggsave(alltaxa_gginext, file = here('figures', 'inext_plots', 'alltaxa_plot.png'),
+       height = 8, width = 15, dpi = 600)
 
 # Big iNEXT plots ---------------------------------------------------------
 
@@ -243,6 +244,8 @@ ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
 
 type2_inext_plot <- big_inext_plotting(input_list = inext_objs,
                                        inext_type = 2)
+
+type2_inext_plot
 ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
        type2_inext_plot,
        height = 15,
