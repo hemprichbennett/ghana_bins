@@ -1,6 +1,9 @@
 library(tidyverse)
 library(here)
 library(hms)
+library(nlme)
+library(emmeans)
+library(ggsignif)
 
 # read in data
 malaise_trap_deployments <- read_csv(here('data', 'processed_data', 
@@ -98,7 +101,7 @@ missing_values <- malaise_trap_data_to_use %>%
 
 
 
-trap_abundance <- malaise_trap_data_to_use %>%
+trap_insect_numbers <- malaise_trap_data_to_use %>%
   # remove any bottles with no time found (the ones in missing_values)
   filter(!is.na(start_classification)) %>%
   group_by(overall_lot, start_classification) %>%
@@ -108,30 +111,77 @@ trap_abundance <- malaise_trap_data_to_use %>%
                values_to = 'variable_result')
 
 
-# Basic boxplot of results ------------------------------------------------
+
+# Models ------------------------------------------------------------------
 
 
-ggplot(trap_abundance, aes(x = start_classification, y = variable_result))+
+## Abundance model ---------------------------------------------------------
+
+
+
+abundance_model <- nlme::lme(variable_result ~ start_classification, 
+          random = ~ 1 | overall_lot,
+          data = filter(trap_insect_numbers, 
+                        variable_type == 'Number of insects captured'))
+          
+
+summary(abundance_model)
+intervals(abundance_model)
+
+# the significance of each pairwise comparison
+emmeans(abundance_model, pairwise ~ start_classification)
+# the only significant pairs for abundance_model were 
+# 00:00:00 - 12:00:00  p=0.0097
+# 12:00:00 - 18:00:00  p=0.0064
+
+abundance_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of insects captured'), 
+                            aes(x = start_classification, y = variable_result))+
   geom_boxplot()+
   theme_bw()+
-  facet_wrap(. ~variable_type, scales = 'free_y', 
-             # put the facet labels on the left of the subplots
-             switch = 'left')+
-  # put the facet labels outside of the axis markers, to serve as axis labels
-  theme(strip.placement = "outside",
-        # make the facet labels have a white background
-        strip.background =element_rect(fill="white"),
-        # remove redundant y-axis label
-        axis.title.y = element_blank()
-        )+
-  xlab('Bottle start time')
+  ylab('Number of insects captured')+
+  xlab('Bottle start time')+
+  geom_signif(comparisons = list(c("00:00:00", "12:00:00"),
+                                 c("12:00:00", "18:00:00")),
+              annotation=c("*", "*"), textsize = 6,
+              y_position = c(180, 200))+
+  theme(text = element_text(size = 15))
+abundance_boxplot
 
-library(nlme)
+ggsave(filename = here('figures', 'fig_6_abundance_boxplot.png'),
+       abundance_boxplot,
+       dpi = 600)
 
-test_model <- nlme::lme(variable_result ~ start_classification, 
-          random = ~ start_classification | overall_lot,
-          data = filter(trap_abundance, 
-                        variable_type == 'Number of insects captured'))
+## BIN model ---------------------------------------------------------------
 
-summary(test_model)
+bin_model <- nlme::lme(variable_result ~ start_classification, 
+                             random = ~ 1 | overall_lot,
+                             data = filter(trap_insect_numbers, 
+                                           variable_type == 'Number of unique BINs'))
 
+
+summary(bin_model)
+
+
+
+emmeans(bin_model, pairwise ~ start_classification)
+# the only significant pairs for bin_model were 
+# 00:00:00 - 12:00:00  p=0.0145
+# 12:00:00 - 18:00:00  p=0.0056
+
+
+bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of unique BINs'), 
+                      aes(x = start_classification, y = variable_result))+
+  geom_boxplot()+
+  theme_bw()+
+  ylab('Number of unique BINs')+
+  xlab('Bottle start time')+
+  geom_signif(comparisons = list(c("00:00:00", "12:00:00"),
+                                 c("12:00:00", "18:00:00")),
+              annotation=c("*", "*"), textsize = 6,
+              y_position = c(200, 220))+
+  theme(text = element_text(size = 15))
+bin_boxplot
+
+ggsave(filename = here('figures', 'fig_7_bin_boxplot.png'),
+       bin_boxplot,
+       dpi = 600)
