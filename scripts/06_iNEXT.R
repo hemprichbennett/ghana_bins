@@ -4,7 +4,6 @@
 library(tidyverse)
 library(iNEXT)
 library(here)
-#library(vegan)
 
 source(here('parameters.R'))
 
@@ -111,16 +110,17 @@ type1_plot <- ggplot(type1_df, aes(x=x, y=y, colour=Assemblage)) +
   scale_colour_viridis_d()+
   theme(legend.position = "bottom", 
         legend.title=element_blank(),
-        text=element_text(size=18))
+        text=element_text(size=10))
 type1_plot
 
 ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
        type1_plot,
        dpi = 600)
 
-ggsave(filename = here('figures', 'fig_2_type1_inext_plot.png'),
+ggsave(filename = here('figures', 'fig_1_type1_inext_plot.png'),
        type1_plot,
-       dpi = 600)
+       dpi = 600,
+       width = 11.5)
 
 # type2 plot
 type2_df <- map(inext_objs, fortify, type = 2) %>%
@@ -143,16 +143,17 @@ type2_plot <- ggplot(type2_df, aes(x=x, y=y, colour=Assemblage)) +
   scale_colour_viridis_d()+
   theme(legend.position = "bottom", 
         legend.title=element_blank(),
-        text=element_text(size=18))
+        text=element_text(size=10))
 type2_plot
 
 ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
        type2_plot,
        dpi = 600)
 
-ggsave(filename = here('figures', 'fig_3_type2_inext_plot.png'),
+ggsave(filename = here('figures', 'supplementary_figure_type2_inext_plot.png'),
        type2_plot,
-       dpi = 600)
+       dpi = 600, 
+       width = 11.5)
 
 # make a plot of ALL taxa -------------------------------------------------
 
