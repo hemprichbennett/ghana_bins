@@ -60,6 +60,95 @@ inext_objs <- list()
 inext_plots <- list()
 inext_plots[['completeness']] <- list()
 inext_plots[['extrapolation']] <- list()
+
+
+
+# Condensed iNEXT plots ---------------------------------------------------
+
+
+for(o in desired_orders){
+  print(o)
+  inext_objs[[o]] <- list()
+  for_inext <- list()
+  for(t in traptypes){
+    inext_vec <- tib_for_inext %>%
+      # select only the rows that we need for this order and trap type
+      filter(order == o, type == t) %>%
+      # calculate the abundance of each BIN
+      group_by(bin) %>%
+      summarise(total_nsamples = sum(nsamples)) %>%
+      # arrange the values from biggest to smallest
+      arrange(desc(total_nsamples)) %>%
+      # pull just a vector of total abundances
+      pull(total_nsamples)
+    if(length(inext_vec) >= 5){
+      for_inext[[t]] <- inext_vec
+    }
+  }
+  inext_objs[[o]] <- iNEXT(for_inext, datatype = 'abundance')
+}
+
+
+# type1 plot
+type1_df <- map(inext_objs, fortify, type = 1) %>%
+  bind_rows(.id = 'taxa')
+
+
+type1_df.point <- type1_df[which(type1_df$Method=="Observed"),]
+type1_df.line <- type1_df[which(type1_df$Method!="Observed"),]
+
+
+type1_plot <- ggplot(type1_df, aes(x=x, y=y, colour=Assemblage)) + 
+  geom_point(size=2, data=type1_df.point) +
+  #geom_point(aes(shape=Assemblage), size=5, data=type1_df.point) +
+  geom_line(aes(linetype=Method), lwd=1.5, data=type1_df.line) +
+  facet_wrap(.~ taxa, scales = 'free') +
+  geom_ribbon(aes(ymin=y.lwr, ymax=y.upr,
+                  fill=Assemblage, colour=NULL), alpha=0.2) +
+  labs(x="Number of individual insects from order and trap type sequenced", 
+       y="Number of BINs") +
+  theme_bw()+
+  scale_colour_viridis_d()+
+  theme(legend.position = "bottom", 
+        legend.title=element_blank(),
+        text=element_text(size=18))
+type1_plot
+
+ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
+       type1_plot,
+       dpi = 600)
+
+# type2 plot
+type2_df <- map(inext_objs, fortify, type = 2) %>%
+  bind_rows(.id = 'taxa')
+
+
+type2_df.point <- type2_df[which(type2_df$Method=="Observed"),]
+type2_df.line <- type2_df[which(type2_df$Method!="Observed"),]
+
+
+type2_plot <- ggplot(type2_df, aes(x=x, y=y, colour=Assemblage)) + 
+  geom_point(size=2, data=type2_df.point) +
+  geom_line(aes(linetype=Method), lwd=1.5, data=type2_df.line) +
+  facet_wrap(.~ taxa, scales = 'free') +
+  geom_ribbon(aes(ymin=y.lwr, ymax=y.upr,
+                  fill=Assemblage, colour=NULL), alpha=0.2) +
+  labs(x="Number of individual insects from order and trap type sequenced", 
+       y="Sample coverage") +
+  theme_bw()+
+  scale_colour_viridis_d()+
+  theme(legend.position = "bottom", 
+        legend.title=element_blank(),
+        text=element_text(size=18))
+type2_plot
+
+ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
+       type2_plot,
+       dpi = 600)
+
+# Old code, probably to be deleted ----------------------------------------
+
+
 for(trap_type in traptypes){
   for_inext_list[[trap_type]] <- list()
   # n_events <- tib_for_inext %>%
@@ -115,22 +204,24 @@ for(trap_type in traptypes){
   
   
   # plot interpolation/extrapolation
-  # inext_plots[['extrapolation']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=3, 
-  #                                                        color.var="Assemblage",
-  #                                                       se = F) +
-  #   theme_bw(base_size = 18) +
-  #   theme(legend.position="bottom",
-  #         legend.box = "vertical") + 
-  #   ylab("BIN diversity")+ 
-  #   ggtitle(trap_type) 
-  # ggsave(here('figures', 'inext_plots', 
-  #             paste0('extrapolation_', trap_type, '.pdf')),
-  #        inext_plots[['extrapolation']][[trap_type]],
-  #        width = 8)
+   inext_plots[['extrapolation']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=3, 
+                                                          color.var="Assemblage",
+                                                         se = F) +
+     theme_bw(base_size = 18) +
+     theme(legend.position="bottom",
+           legend.box = "vertical") + 
+     ylab("BIN diversity")+ 
+     ggtitle(trap_type) 
+   ggsave(here('figures', 'inext_plots', 
+               paste0('extrapolation_', trap_type, '.pdf')),
+          inext_plots[['extrapolation']][[trap_type]],
+          width = 8)
 }
 
 
-# make a plot of ALL taxa
+
+# make a plot of ALL taxa -------------------------------------------------
+
 
 alltaxa_trap_abundances <- too_many_cols %>%
   filter(!is.na(type)) %>%
