@@ -4,6 +4,7 @@ library(hms)
 library(nlme)
 library(emmeans)
 library(ggsignif)
+library(gridExtra)
 
 # read in data
 malaise_trap_deployments <- read_csv(here('data', 'processed_data', 
@@ -144,7 +145,8 @@ abundance_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number
                                  c("12:00:00", "18:00:00")),
               annotation=c("*", "*"), textsize = 6,
               y_position = c(180, 200))+
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15))+ 
+  labs(tag = 'A')
 abundance_boxplot
 
 ggsave(filename = here('figures', 'fig_6_abundance_boxplot.png'),
@@ -179,9 +181,15 @@ bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of un
                                  c("12:00:00", "18:00:00")),
               annotation=c("*", "*"), textsize = 6,
               y_position = c(200, 220))+
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15))+
+  labs(tag = 'B')
 bin_boxplot
 
 ggsave(filename = here('figures', 'fig_7_bin_boxplot.png'),
        bin_boxplot,
        dpi = 600)
+
+
+multipanel_boxplot <- grid.arrange(abundance_boxplot, bin_boxplot, ncol = 2)
+multipanel_boxplot
+ggsave(multipanel_boxplot, filename = here('figures', 'fig_x_mutlipanel_boxplot.png'))
