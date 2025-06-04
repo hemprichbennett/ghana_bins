@@ -118,6 +118,10 @@ ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
        type1_plot,
        dpi = 600)
 
+ggsave(filename = here('figures', 'fig_2_type1_inext_plot.png'),
+       type1_plot,
+       dpi = 600)
+
 # type2 plot
 type2_df <- map(inext_objs, fortify, type = 2) %>%
   bind_rows(.id = 'taxa')
@@ -146,79 +150,9 @@ ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
        type2_plot,
        dpi = 600)
 
-# Old code, probably to be deleted ----------------------------------------
-
-
-for(trap_type in traptypes){
-  for_inext_list[[trap_type]] <- list()
-  # n_events <- tib_for_inext %>%
-  #   filter(type == trap_type) %>%
-  #   pull(sampling_event) %>%
-  #   unique() %>%
-  #   length()
-  for(o in desired_orders){
-    cat('trap type is ', trap_type, '\n')
-    
-    #cat('order is ', o, 'trap type is ', trap_type, ' number of sampling events was', n_events, '\n')
-    incidence_freq <- tib_for_inext %>%
-      filter(type == trap_type) %>%
-      filter(order == o) %>%
-      group_by(bin) %>%
-      summarise(freq = n())%>%
-      pull(freq) %>%
-      sort(decreasing = T)
-    
-    n_sequenced <- sum(incidence_freq)
-    
-    # if there are fewer than nbin_threshold unique BINs in this
-    # trap type , discard the order, otherwise save it for analysis
-    
-    if(length(incidence_freq) >= nbin_threshold){
-      for_inext_list[[trap_type]][[o]] <- c(n_sequenced, incidence_freq)
-    }
-    
-  }
-  inext_objs[[trap_type]] <- iNEXT(for_inext_list[[trap_type]], 
-                                  #q = c(0, 1, 2),
-                                  q = 0, # get 'species' richness 
-                                  # this is incidence_freq: we're analysing a dataset 
-                                  # of how often a given BIN is detected at least once in 
-                                  # a sample, not the number of occurrences of that BIN
-                      datatype = 'incidence_freq',
-                      size = round(seq(1,8000, by = 100)),
-                      se=T)
-  
-  
-  # Plot completeness
-  # inext_plots[['completeness']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=2, 
-  #                                     color.var="Assemblage",
-  #                                     se = F) +
-  #   theme_bw(base_size = 18) +
-  #   theme(legend.position="bottom",
-  #         legend.box = "vertical") + 
-  #   ggtitle(trap_type) 
-  # ggsave(here('figures', 'inext_plots', 
-  #             paste0('completeness_', trap_type, '.pdf')),
-  #        inext_plots[['completeness']][[trap_type]],
-  #        width = 8)
-  
-  
-  # plot interpolation/extrapolation
-   inext_plots[['extrapolation']][[trap_type]] <- ggiNEXT(inext_objs[[trap_type]], type=3, 
-                                                          color.var="Assemblage",
-                                                         se = F) +
-     theme_bw(base_size = 18) +
-     theme(legend.position="bottom",
-           legend.box = "vertical") + 
-     ylab("BIN diversity")+ 
-     ggtitle(trap_type) 
-   ggsave(here('figures', 'inext_plots', 
-               paste0('extrapolation_', trap_type, '.pdf')),
-          inext_plots[['extrapolation']][[trap_type]],
-          width = 8)
-}
-
-
+ggsave(filename = here('figures', 'fig_3_type2_inext_plot.png'),
+       type2_plot,
+       dpi = 600)
 
 # make a plot of ALL taxa -------------------------------------------------
 
@@ -231,9 +165,7 @@ alltaxa_trap_abundances <- too_many_cols %>%
 
 alltaxa_trap_for_inext <- list()
 for(trap in unique(alltaxa_trap_abundances$type)){
-  # if(trap == 'Cdc'){
-  #   next()
-  # }
+  
   print(trap)
   n_individuals <- alltaxa_trap_abundances %>%
     filter(type == trap) %>%
@@ -270,158 +202,4 @@ alltaxa_gginext <- ggiNEXT(z, type=1, color.var="Assemblage")+ theme_bw()+
 alltaxa_gginext
 ggsave(alltaxa_gginext, file = here('figures', 'inext_plots', 'alltaxa_plot.png'),
        height = 8, width = 15, dpi = 600)
-
-# Big iNEXT plots ---------------------------------------------------------
-
-
-big_inext_plotting <- function(input_list, inext_type){
-  inext_tib <- map(input_list, function(x) fortify(x,type=inext_type)) %>% 
-    bind_rows(.id = 'trap_type') %>%
-    # reverse the factors in the 'Method' column, as their default alphabetical
-    # order makes the plot legend confusing
-    mutate(Method = fct(Method, 
-                        levels = c('Observed', 'Rarefaction', 'Extrapolation')),
-           # capitalise the trap types
-           trap_type = str_to_title(trap_type))
-  
-  if(inext_type == 1){
-    yaxis_text <- 'Number of BINs'
-  }else if(
-    inext_type ==2
-  ){
-    yaxis_text <- 'Sample coverage'
-  }
-  
-  
-  inext_plot <- ggplot(inext_tib, aes(x = x, y = y
-  ))+
-    geom_line(data = filter(inext_tib, Method %in% c('Rarefaction', 'Extrapolation')),
-              mapping = aes(linetype=Method))+
-    geom_ribbon(aes(ymin=y.lwr, ymax=y.upr), alpha=0.2)+
-    scale_linetype('Data type')+
-    geom_point(data = filter(inext_tib, Method == 'Observed'),
-               mapping = aes(x = x, y = y, fill = Method))+
-    #scale_fill_discrete(guide = guide_legend(title = NULL))+
-    facet_grid(Assemblage ~trap_type, 
-               scales = 'free')+
-    theme_bw()+
-    guides(linetype = guide_legend(order=1),
-           fill = guide_legend(order=2, title = NULL))+
-    theme(legend.position = 'bottom')+
-    labs(x = 'Number of individual insects from order sequenced', y = yaxis_text)
-  
-  
-  return(inext_plot)
-  
-}
-
-type1_inext_plot <- big_inext_plotting(input_list = inext_objs,
-                                       inext_type = 1)
-type1_inext_plot
-ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
-       type1_inext_plot,
-       height = 15,
-       dpi = 600)
-
-ggsave(filename = here('figures', 'fig_2_type1_inext_plot.png'),
-       type1_inext_plot,
-       height = 15,
-       dpi = 600)
-
-ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
-       type1_inext_plot,
-       height = 15,
-       dpi = 600)
-
-type2_inext_plot <- big_inext_plotting(input_list = inext_objs,
-                                       inext_type = 2)
-
-type2_inext_plot
-ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
-       type2_inext_plot,
-       height = 15,
-       dpi = 600)
-
-ggsave(filename = here('figures', 'fig_3_type2_inext_plot.png'),
-       type2_inext_plot,
-       height = 15,
-       dpi = 600)
-
-
-
-
-
-# Further stuff -----------------------------------------------------------
-
-
-
-# grouping by the date-time start. Is this correct?
-visit_inext_tib <- too_many_cols %>%
-  filter(!is.na(bin)) %>%
-  #rename(date =date_time_start) %>%
-  filter(!is.na(date)) %>%
-  select(bin, order, date) %>%
-  group_by_all() %>%
-  summarise(nsamples = n())
-
-n_dates <- visit_inext_tib %>%
-  pull(date) %>%
-  unique(.) %>%
-  length()
-
-visit_inext_list <- list()
-for(o in unique(visit_inext_tib$order)){
-  incidence_freq <- visit_inext_tib %>%
-    filter(order == o) %>%
-    group_by(bin) %>%
-    summarise(freq = n())%>%
-    pull(freq) %>%
-    sort(decreasing = T)
-  # if there are fewer than 15 unique BINs in this
-  # trap type , discard the order, otherwise save it for analysis
-  if(length(incidence_freq) >= 15){
-    visit_inext_list[[o]] <- c(n_dates, incidence_freq)
-  }
-  
-}
-
-visit_inext <- iNEXT(visit_inext_list, 
-      #q = c(0, 1, 2),
-      q = 0, # get 'species' richness 
-      datatype = 'incidence_freq',
-      size = round(seq(1,n_dates*4, by = n_dates/10)),
-      se=FALSE)
-
-visit_inext_plot <- ggiNEXT(visit_inext, type=2, 
-                            color.var="Assemblage",
-                            se = F) +
-  xlab('Number of visits') +
-  scale_colour_viridis_d()+
-  facet_wrap(.~ Assemblage)+
-  theme_bw(base_size = 18) +
-  theme(legend.position="bottom",
-        legend.box = "vertical")
-visit_inext_plot
-ggsave(here('figures', 'inext_plots', 'overall_visits.pdf'), visit_inext_plot)
-# estimate of 'species' richness
-overall_chaorichness <- ChaoRichness(visit_inext_list, 
-                                     datatype = 'incidence_freq') %>%
-  mutate(percent_completeness = Observed / Estimator * 100) %>%
-  rownames_to_column('taxa')
-
-write_csv(overall_chaorichness,
-          file = here('results', 'overall_chaorichness.csv'))
-
-# the number of samples classed to BIN/ not classed to BIN
-
-samples_with_bins <- too_many_cols %>% 
-  mutate(has_bin = !is.na(bin)) %>%
-  group_by(order, has_bin) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = has_bin, values_from = n, values_fill = 0)
-
-write_csv(samples_with_bins, 
-          here('results', 'samples_with_bins.csv'))
-
-
 
