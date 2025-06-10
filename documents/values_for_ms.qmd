@@ -15,6 +15,7 @@ execute:
 library(here)
 library(tidyverse)
 library(countrycode)
+library(vegan)
 
 bold_and_earthcape_combined <- read_csv(
   file = here('data', 'processed_data', 
@@ -128,14 +129,25 @@ We detected `r bold_and_earthcape_combined %>% filter(!is.na(bin)) %>% pull(bin)
 ```{r}
 #| label: tbl-per-traptype-summary
 #| tbl-cap: The number of samples and BINs sequenced for each trap type used
+diversity_stats <- bold_and_earthcape_combined %>%
+  filter(!is.na(type)) %>%
+  group_by(type, bin) %>%
+  summarise(nbins = n()) %>%
+  ungroup() %>%
+  group_by(type) %>%
+  summarise(`Shannon Diversity` = diversity(nbins)) %>%
+  mutate(`Shannon Diversity` = signif(`Shannon Diversity`, digits = 3))
+
 tbl_1 <- bold_and_earthcape_combined %>% 
   filter(!is.na(type)) %>% 
   group_by(type) %>% 
   summarise(`Number of samples` = n(), 
             `Number of BINs` = length(unique(bin))) %>%
-  knitr::kable(., format.args = list(big.mark = ','))
+  left_join(diversity_stats)
 
 write_csv(tbl_1, file = here('results', 'manuscript_tables', 'table_1.csv'))
+
+knitr::kable(tbl_1, format.args = list(big.mark = ','))
 ```
 
 Of the `r retention_threshold` most-abundant BINs in our dataset, `r abundant_bin_summary %>% filter(available == 'Already publicly available') %>% pull(n_bins)` were already publicly available, `r abundant_bin_summary %>% filter(available == 'Already sequenced, no public sequences') %>% pull(n_bins)` had already been sequenced but no other representatives of that BIN were publicly available on BOLD, and `r abundant_bin_summary %>% filter(available == 'Unique to our project') %>% pull(n_bins)` BINs were unique to our project.
@@ -162,11 +174,9 @@ No trap types or taxonomic orders approached completeness (@fig-type1 and @fig-t
 order_adonis <- read_csv(here('results', 'adonis', 'order_summary.csv'))
 family_adonis <- read_csv(here('results', 'adonis', 'family_summary.csv'))
 
-order_bd <- read_csv(here('results', 'adonis', 'order_betadispersion.csv'))
-family_bd <- read_csv(here('results', 'adonis', 'family_betadispersion.csv'))
 ```
 
-NMDS ordinations for both taxonomic Order and Family showed some overlap between the trap types (@fig-order-nmds and @fig-family-nmds). The Permutational Multivariate Analysis of Variance test showed a significant difference between trap types at both the order level (p =`r order_adonis %>% select(p.value) %>% head(1)%>% signif(5)`) and family level (p = `r family_adonis %>% select(p.value) %>% head(1)%>% signif(5)`). However betadispersion was significant for both the order (p = `r order_bd %>% select(p.value) %>% head(1) %>% signif(5)`) and family (p = `r family_bd %>% select(p.value) %>% head(1)%>% signif(5)`) analyses. *(I'll tidy those numbers up later, just not sure how to do it yet)*
+NMDS ordinations for both taxonomic Order and Family showed some overlap between the trap types (@fig-order-nmds and @fig-family-nmds). The Permutational Multivariate Analysis of Variance test showed a significant difference between trap types at both the order level (p =`r order_adonis %>% select(p.value) %>% head(1)%>% signif(5)`) and family level (p = `r family_adonis %>% select(p.value) %>% head(1)%>% signif(5)`). 
 
 ![Order-level NMDS plot](../figures/nmds/order_nmds.png){#fig-order-nmds height="20cm"}
 
