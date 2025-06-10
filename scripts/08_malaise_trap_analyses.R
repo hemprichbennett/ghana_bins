@@ -33,7 +33,10 @@ malaise_trap_deployments <- read_csv(here('data', 'processed_data',
                                        "18:00:00", start_classification),
          start_classification = ifelse(bottle_start_time < as_hms('06:00:00'), 
                                        "00:00:00", start_classification)
-         )
+         ) %>%
+  # class bottles as either 'day' or 'night', rather than as finely as possible
+  mutate(coarse_timing = ifelse(start_classification %in% c('00:00:00', "18:00:00"),
+                                'Night', 'Day'))
 
 all_arthropod_data <- read_csv(here('data', 'processed_data', 
                                     'bold_and_earthcape_combined.csv'))
@@ -105,7 +108,7 @@ missing_values <- malaise_trap_data_to_use %>%
 trap_insect_numbers <- malaise_trap_data_to_use %>%
   # remove any bottles with no time found (the ones in missing_values)
   filter(!is.na(start_classification)) %>%
-  group_by(overall_lot, start_classification) %>%
+  group_by(overall_lot, coarse_timing) %>%
   summarise(`Number of insects captured` = n(),
             `Number of unique BINs` = length(unique(bin))) %>%
   pivot_longer(cols = c(`Number of insects captured`, `Number of unique BINs`), names_to = 'variable_type', 
@@ -136,15 +139,11 @@ emmeans(abundance_model, pairwise ~ start_classification)
 # 12:00:00 - 18:00:00  p=0.0064
 
 abundance_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of insects captured'), 
-                            aes(x = start_classification, y = variable_result))+
+                            aes(x = coarse_timing, y = variable_result))+
   geom_boxplot()+
   theme_bw()+
   ylab('Number of insects captured')+
-  xlab('Bottle start time')+
-  geom_signif(comparisons = list(c("00:00:00", "12:00:00"),
-                                 c("12:00:00", "18:00:00")),
-              annotation=c("*", "*"), textsize = 6,
-              y_position = c(180, 200))+
+  xlab('Bottle deployment time')+
   theme(text = element_text(size = 15))+ 
   labs(tag = 'A')
 abundance_boxplot
@@ -172,15 +171,11 @@ emmeans(bin_model, pairwise ~ start_classification)
 
 
 bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of unique BINs'), 
-                      aes(x = start_classification, y = variable_result))+
+                      aes(x = coarse_timing, y = variable_result))+
   geom_boxplot()+
   theme_bw()+
   ylab('Number of unique BINs')+
-  xlab('Bottle start time')+
-  geom_signif(comparisons = list(c("00:00:00", "12:00:00"),
-                                 c("12:00:00", "18:00:00")),
-              annotation=c("*", "*"), textsize = 6,
-              y_position = c(200, 220))+
+  xlab('Bottle deployent time')+
   theme(text = element_text(size = 15))+
   labs(tag = 'B')
 bin_boxplot
@@ -192,4 +187,5 @@ ggsave(filename = here('figures', 'fig_7_bin_boxplot.png'),
 
 multipanel_boxplot <- grid.arrange(abundance_boxplot, bin_boxplot, ncol = 2)
 multipanel_boxplot
-ggsave(multipanel_boxplot, filename = here('figures', 'fig_x_mutlipanel_boxplot.png'))
+ggsave(multipanel_boxplot, filename = here('figures', 'fig_x_mutlipanel_boxplot.png'),
+       width = 7)
