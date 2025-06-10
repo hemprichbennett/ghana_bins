@@ -53,4 +53,9 @@ for(i in 1:iterations){
 # combine into a big dataframe
 bold_df <- do.call(rbind, bold_list)
 
+# filter out any sequences from our own projects
+bold_df <- bold_df %>%
+  # retain lines that do NOT match the pattern 'begins with' GCEP/TMGHA/TMGHB
+  filter(!grepl('^GCEP|^TMGHA|^TMGHB', processid))
+
 write_csv(bold_df, 'data/processed_data/bold_public_bin_matches.csv')
