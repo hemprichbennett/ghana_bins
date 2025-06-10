@@ -98,9 +98,14 @@ top20_plot <- ggplot(country_nshared_tib, aes(x = nbins, y = fct_rev(country), f
   theme_bw()+
   scale_fill_viridis_d()+
   xlab('Number of publicly available BINs shared with our dataset')+
-  ylab('Country')
+  ylab('Country')+
+  theme(legend.position = 'bottom')+ 
+  labs(fill = 'Geographic area')
 
 top20_plot
+ggsave(plot = top20_plot,
+       filename = here('figures', 'fig_5_topcountries_plot.png'),
+       width = 8)
 
 # Analyse trap-composition of BINs with no public matches -----------------
 
