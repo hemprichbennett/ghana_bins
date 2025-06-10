@@ -212,3 +212,18 @@ multipanel_boxplot <- grid.arrange(abundance_boxplot, bin_boxplot, ncol = 2)
 multipanel_boxplot
 ggsave(multipanel_boxplot, filename = here('figures', 'fig_x_mutlipanel_boxplot.png'),
        width = 7)
+
+
+
+# Brown-Forsythe tests ----------------------------------------------------
+
+library(onewaytests)
+
+# test effect of day/night time on number of insects captured
+bf.test(variable_result ~ coarse_timing, data = filter(trap_insect_numbers, 
+                                                       variable_type == 'Number of insects captured'))
+
+# test effect of day/night time on number of BINs
+bf.test(variable_result ~ coarse_timing, data = filter(trap_insect_numbers, 
+                                                       variable_type == 'Number of unique BINs'))
+
