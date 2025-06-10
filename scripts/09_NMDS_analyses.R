@@ -192,7 +192,7 @@ family_trap_plot <- nmds_plot(input_list = family_nmds,
 family_trap_plot
 
 ggsave(here('figures', 'nmds', 'family_trap_nmds.png'), family_trap_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_5_family_trap_nmds.png'), family_trap_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_3_family_trap_nmds.png'), family_trap_plot, height = 12, width = 12)
 
 
 ### habitatwise plots
@@ -206,7 +206,7 @@ family_habitat_plot <- nmds_plot(input_list = family_nmds,
 family_habitat_plot
 
 ggsave(here('figures', 'nmds', 'family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_7_family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
+#ggsave(here('figures', 'fig_7_family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
 
 
 ## Order-level
@@ -228,7 +228,7 @@ order_trap_plot <- nmds_plot(input_list = order_nmds,
 order_trap_plot
 
 ggsave(here('figures', 'nmds', 'order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_4_order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_2_order_trap_nmds.png'),order_trap_plot, height = 12, width = 12)
 
 ## habitatwise plots
 
@@ -240,7 +240,7 @@ order_habitat_plot <- nmds_plot(input_list = order_nmds,
 order_habitat_plot
 
 ggsave(here('figures', 'nmds', 'order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_8_order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
+#ggsave(here('figures', 'fig_8_order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
 
 
 
