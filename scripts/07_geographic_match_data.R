@@ -84,6 +84,24 @@ ggplot(region_bin_traps, aes(fill = trap_type, x = geographic_region,
 
 
 
+# Make a plot of the top 20 countries -------------------------------------
+
+country_nshared_tib <- combined_tib %>%
+  group_by(country, geographic_region) %>%
+  summarise(nbins = n()) %>%
+  ungroup() %>%
+  slice_max(nbins, n = 20) %>%
+  mutate(country = fct(country))
+
+top20_plot <- ggplot(country_nshared_tib, aes(x = nbins, y = fct_rev(country), fill = geographic_region)) +
+  geom_bar(stat = 'identity')+
+  theme_bw()+
+  scale_fill_viridis_d()+
+  xlab('Number of publicly available BINs shared with our dataset')+
+  ylab('Country')
+
+top20_plot
+
 # Analyse trap-composition of BINs with no public matches -----------------
 
 unmatched <- bold_and_earthcape_combined %>%
