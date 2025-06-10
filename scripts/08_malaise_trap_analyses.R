@@ -108,7 +108,7 @@ missing_values <- malaise_trap_data_to_use %>%
 trap_insect_numbers <- malaise_trap_data_to_use %>%
   # remove any bottles with no time found (the ones in missing_values)
   filter(!is.na(start_classification)) %>%
-  group_by(overall_lot, coarse_timing) %>%
+  group_by(overall_lot, coarse_timing,start_classification) %>%
   summarise(`Number of insects captured` = n(),
             `Number of unique BINs` = length(unique(bin))) %>%
   pivot_longer(cols = c(`Number of insects captured`, `Number of unique BINs`), names_to = 'variable_type', 
@@ -123,20 +123,32 @@ trap_insect_numbers <- malaise_trap_data_to_use %>%
 
 
 
-abundance_model <- nlme::lme(variable_result ~ start_classification, 
+precise_abundance_model <- nlme::lme(variable_result ~ start_classification, 
           random = ~ 1 | overall_lot,
           data = filter(trap_insect_numbers, 
                         variable_type == 'Number of insects captured'))
           
 
-summary(abundance_model)
-intervals(abundance_model)
+summary(precise_abundance_model)
+intervals(precise_abundance_model)
+anova(precise_abundance_model)
 
 # the significance of each pairwise comparison
-emmeans(abundance_model, pairwise ~ start_classification)
-# the only significant pairs for abundance_model were 
+emmeans(precise_abundance_model, pairwise ~ start_classification)
+# the only significant pairs for precise_abundance_model were 
 # 00:00:00 - 12:00:00  p=0.0097
 # 12:00:00 - 18:00:00  p=0.0064
+
+# now model it using just day/night
+coarse_abundance_model <- nlme::lme(variable_result ~ coarse_timing, 
+                                     random = ~ 1 | overall_lot,
+                                     data = filter(trap_insect_numbers, 
+                                                   variable_type == 'Number of insects captured'))
+
+
+summary(coarse_abundance_model)
+intervals(coarse_abundance_model)
+anova(coarse_abundance_model)
 
 abundance_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of insects captured'), 
                             aes(x = coarse_timing, y = variable_result))+
@@ -154,20 +166,31 @@ ggsave(filename = here('figures', 'fig_6_abundance_boxplot.png'),
 
 ## BIN model ---------------------------------------------------------------
 
-bin_model <- nlme::lme(variable_result ~ start_classification, 
+precise_bin_model <- nlme::lme(variable_result ~ start_classification, 
                              random = ~ 1 | overall_lot,
                              data = filter(trap_insect_numbers, 
                                            variable_type == 'Number of unique BINs'))
 
 
-summary(bin_model)
+summary(precise_bin_model)
+anova(precise_bin_model)
 
 
-
-emmeans(bin_model, pairwise ~ start_classification)
-# the only significant pairs for bin_model were 
+emmeans(precise_bin_model, pairwise ~ start_classification)
+# the only significant pairs for precise_bin_model were 
 # 00:00:00 - 12:00:00  p=0.0145
 # 12:00:00 - 18:00:00  p=0.0056
+
+# now model it for day/night only
+coarse_bin_model <- nlme::lme(variable_result ~ coarse_timing, 
+                               random = ~ 1 | overall_lot,
+                               data = filter(trap_insect_numbers, 
+                                             variable_type == 'Number of unique BINs'))
+
+
+summary(coarse_bin_model)
+anova(coarse_bin_model)
+emmeans(coarse_bin_model, pairwise ~ coarse_timing)
 
 
 bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of unique BINs'), 
