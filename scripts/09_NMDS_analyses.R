@@ -420,3 +420,47 @@ multipanel_nmds <- grid.arrange(order_malaise_plot, family_malaise_plot, ncol = 
 multipanel_nmds
 ggsave(multipanel_nmds, filename = here('figures', 'si_x_mutlipanel_nmds.png'),
        width = 7)
+
+# Basic night-day taxonomic summaries -------------------------------------
+
+# get the order and family pairs from our big input data
+taxonomy_tib <- too_many_cols %>%
+  select(order, family) %>%
+  filter(!is.na(family)) %>%
+  distinct()
+
+# now summarise our datasets by day/night for order
+order_temporal_counts <- order_malaise_input$trap_matrix %>%
+  as_tibble(rownames = 'sampling_event') %>%
+  mutate(sampling_event = as.numeric(sampling_event)) %>%
+  left_join(order_malaise_input$trap_types) %>%
+  select(-c(habitat_type, trap_type, sampling_event)) %>%
+  pivot_longer(where(is.numeric), names_to = 'taxa', values_to = 'count') %>%
+  group_by(coarse_timing, taxa) %>%
+  summarise(overall_abundance = sum(count)) %>%
+  pivot_wider(names_from = 'coarse_timing', values_from = 'overall_abundance')
+
+# now summarise our datasets by day/night for family
+family_temporal_counts <- family_malaise_input$trap_matrix %>%
+  as_tibble(rownames = 'sampling_event') %>%
+  mutate(sampling_event = as.numeric(sampling_event)) %>%
+  left_join(order_malaise_input$trap_types) %>%
+  select(-c(habitat_type, trap_type, sampling_event)) %>%
+  pivot_longer(where(is.numeric), names_to = 'taxa', values_to = 'count') %>%
+  group_by(coarse_timing, taxa) %>%
+  summarise(overall_abundance = sum(count)) 
+
+
+family_summary <- family_temporal_counts %>%
+  pivot_wider(names_from = 'coarse_timing', values_from = 'overall_abundance')
+
+# add the order-level information to the family
+
+family_temporal_counts %>%
+  pivot_wider(names_from = 'coarse_timing', values_from = 'overall_abundance') %>%
+  left_join(taxonomy_tib, by = c('taxa' = 'family')) %>%
+  arrange(order) %>%
+  rename(Family = taxa, Order = order) %>%
+  select(Order, Family, Day, Night) %>%
+  write_csv(file = here('results', 'supplementary_table_diurnal_activity.csv'))
+
