@@ -307,6 +307,9 @@ family_test <- adonis2(family_nmds$dist_mat~family_nmds$scores$trap_type + famil
 family_test
 
 family_test %>%
+  broom::tidy()
+
+family_test %>%
   broom::tidy() %>%
   write_csv(here('results', 'adonis', 'family_summary.csv'))
 
@@ -362,3 +365,40 @@ nmds_plot(input_list = family_malaise_nmds,
           title_str = 'Family-level NMDS',
           viridis_option = 'D',
           plot_by = 'coarse_timing')
+
+
+# test significance of timing and habitat type on the families detected
+adonis2(family_malaise_nmds$dist_mat~family_malaise_nmds$scores$coarse_timing + family_malaise_nmds$scores$habitat_type, 
+        permutations = 1e3, by = 'terms') %>%
+  broom::tidy()
+
+# order level
+
+# filter just for the desired values
+order_malaise_input <- order_nmds_input
+
+order_malaise_input$trap_types <- order_malaise_input$trap_types %>% 
+  filter(trap_type == 'Malaise') %>%
+  # add the temporal metadata
+  left_join(malaise_trap_metadata, by = c('sampling_event' = 'lot')) %>%
+  select(sampling_event, trap_type, habitat_type, coarse_timing) %>%
+  filter(!is.na(coarse_timing))
+
+# filter the matrix so that it only contains rows present in the trap_types
+# tibble
+order_malaise_input$trap_matrix <- order_malaise_input$trap_matrix[rownames(order_malaise_input$trap_matrix) %in% order_malaise_input$trap_types$sampling_event,]
+
+order_malaise_nmds <- nmds_analysis(order_malaise_input, 
+                                     min_tries = 20,
+                                     max_tries = 100,
+                                     malaise_analysis = T)
+
+nmds_plot(input_list = order_malaise_nmds,
+          title_str = 'order-level NMDS',
+          viridis_option = 'D',
+          plot_by = 'coarse_timing')
+
+# test significance of timing and habitat type on the orders detected
+adonis2(order_malaise_nmds$dist_mat~order_malaise_nmds$scores$coarse_timing + order_malaise_nmds$scores$habitat_type, 
+        permutations = 1e3, by = 'terms') %>%
+  broom::tidy()
