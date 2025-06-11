@@ -143,8 +143,8 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20,
 
 nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
                       plot_by){
-  if(!plot_by %in% c('trap_type', 'habitat_type')){
-    stop('Acceptable plot_by variables are trap and habitat')
+  if(!plot_by %in% c('trap_type', 'habitat_type', 'coarse_timing')){
+    stop('Acceptable plot_by variables are trap, habitat and malaise timing')
   }
   
   plot_by <- sym(plot_by)
@@ -155,6 +155,9 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
   }else if(plot_by == 'habitat_type'){
     centroids_to_use <- input_list$habitat_centroid
     legend_str = "Habitat type"
+  }else if(plot_by == 'coarse_timing'){
+    centroids_to_use <- input_list$time_centroid
+    legend_str = 'Time'
   }
   
   out_plot <- ggplot(data=input_list$scores,
@@ -354,3 +357,8 @@ family_malaise_nmds <- nmds_analysis(family_malaise_input,
                              min_tries = 20,
                              max_tries = 100,
                              malaise_analysis = T)
+
+nmds_plot(input_list = family_malaise_nmds,
+          title_str = 'Family-level NMDS',
+          viridis_option = 'D',
+          plot_by = 'coarse_timing')
