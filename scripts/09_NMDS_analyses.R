@@ -367,8 +367,7 @@ family_malaise_plot <- nmds_plot(input_list = family_malaise_nmds,
           viridis_option = 'D',
           plot_by = 'coarse_timing',
           all_text_size = 10)+
-  labs(tag = 'B')+
-  theme(text = element_text)
+  labs(tag = 'B')
 
 
 # test significance of timing and habitat type on the families detected
@@ -400,7 +399,7 @@ order_malaise_nmds <- nmds_analysis(order_malaise_input,
                                      malaise_analysis = T)
 
 order_malaise_plot <- nmds_plot(input_list = order_malaise_nmds,
-          title_str = 'order-level NMDS',
+          title_str = 'Order-level NMDS',
           viridis_option = 'D',
           plot_by = 'coarse_timing',
           all_text_size = 10)+
