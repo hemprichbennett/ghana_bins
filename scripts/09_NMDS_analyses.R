@@ -2,6 +2,7 @@
 library(tidyverse)
 library(here)
 library(vegan)
+library(gridExtra)
 
 habitat_data <- read_csv('data/raw_data/lot_habitat_classifications.csv') %>%
   janitor::clean_names() %>%
@@ -142,7 +143,7 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20,
 }
 
 nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
-                      plot_by){
+                      plot_by, all_text_size = 30){
   if(!plot_by %in% c('trap_type', 'habitat_type', 'coarse_timing')){
     stop('Acceptable plot_by variables are trap, habitat and malaise timing')
   }
@@ -178,7 +179,7 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
     #coord_equal() +
     theme_bw()+
     theme(legend.position = 'bottom',
-          text=element_text(size=30))+
+          text=element_text(size=all_text_size))+
     labs(colour = legend_str, shape = legend_str)+
     # increase point size in legend
     guides(colour = guide_legend(override.aes = list(size=10)))
@@ -361,16 +362,21 @@ family_malaise_nmds <- nmds_analysis(family_malaise_input,
                              max_tries = 100,
                              malaise_analysis = T)
 
-nmds_plot(input_list = family_malaise_nmds,
+family_malaise_plot <- nmds_plot(input_list = family_malaise_nmds,
           title_str = 'Family-level NMDS',
           viridis_option = 'D',
-          plot_by = 'coarse_timing')
+          plot_by = 'coarse_timing',
+          all_text_size = 10)+
+  labs(tag = 'B')+
+  theme(text = element_text)
 
 
 # test significance of timing and habitat type on the families detected
 adonis2(family_malaise_nmds$dist_mat~family_malaise_nmds$scores$coarse_timing + family_malaise_nmds$scores$habitat_type, 
         permutations = 1e3, by = 'terms') %>%
   broom::tidy()
+
+
 
 # order level
 
@@ -393,12 +399,25 @@ order_malaise_nmds <- nmds_analysis(order_malaise_input,
                                      max_tries = 100,
                                      malaise_analysis = T)
 
-nmds_plot(input_list = order_malaise_nmds,
+order_malaise_plot <- nmds_plot(input_list = order_malaise_nmds,
           title_str = 'order-level NMDS',
           viridis_option = 'D',
-          plot_by = 'coarse_timing')
+          plot_by = 'coarse_timing',
+          all_text_size = 10)+
+  labs(tag = 'A')
 
 # test significance of timing and habitat type on the orders detected
 adonis2(order_malaise_nmds$dist_mat~order_malaise_nmds$scores$coarse_timing + order_malaise_nmds$scores$habitat_type, 
         permutations = 1e3, by = 'terms') %>%
   broom::tidy()
+
+
+
+# Save malaise plots ------------------------------------------------------
+
+
+
+multipanel_nmds <- grid.arrange(order_malaise_plot, family_malaise_plot, ncol = 2)
+multipanel_nmds
+ggsave(multipanel_nmds, filename = here('figures', 'si_x_mutlipanel_nmds.png'),
+       width = 7)
