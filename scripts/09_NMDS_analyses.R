@@ -312,3 +312,23 @@ anova(family_bd) %>%
 
 
 
+
+
+# Malaise trap time analyses ----------------------------------------------
+
+# family level
+
+# filter just for the desired values
+family_malaise_input <- family_nmds_input
+
+family_malaise_input$trap_types <- family_malaise_input$trap_types %>% 
+  filter(trap_type == 'Malaise') %>%
+  # add the temporal metadata
+  left_join(malaise_trap_metadata, by = c('sampling_event' = 'lot')) %>%
+  select(sampling_event, trap_type, habitat_type, coarse_timing) %>%
+  filter(!is.na(coarse_timing))
+
+# filter the matrix so that it only contains rows present in the trap_types
+# tibble
+family_malaise_input$trap_matrix <- family_malaise_input$trap_matrix[rownames(family_malaise_input$trap_matrix) %in% family_malaise_input$trap_types$sampling_event,]
+  
