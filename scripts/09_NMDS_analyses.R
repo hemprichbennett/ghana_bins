@@ -87,7 +87,8 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
 
 
 # function to do an NMDS and ggplot on a dataset made with the above function
-nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
+nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20,
+                          malaise_analysis = F){
   
   dist_mat <- vegdist(input_list$trap_matrix)
   
@@ -115,12 +116,29 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20){
     group_by(habitat_type) %>%
     summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
   
+  # if this is an analysis of malaise-trap data ONLY, we have temporal data
+  # that will also need analysing and returning
+  if(malaise_analysis == T){
+    time_centroid <- site.scores %>%
+      group_by(coarse_timing) %>%
+      summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
+    
+    return(list(scores = site.scores, 
+                nmds_analysis = big_nmds,
+                trap_centroid = trap_centroid,
+                habitat_centroid = habitat_centroid,
+                time_centroid = time_centroid,
+                dist_mat = dist_mat))
+  }else{
+    # if it isn't malaise-trap data, return all of the standard required objects
+    return(list(scores = site.scores, 
+                nmds_analysis = big_nmds,
+                trap_centroid = trap_centroid,
+                habitat_centroid = habitat_centroid,
+                dist_mat = dist_mat))
+  }
 
-  return(list(scores = site.scores, 
-              nmds_analysis = big_nmds,
-              trap_centroid = trap_centroid,
-              habitat_centroid = habitat_centroid,
-              dist_mat = dist_mat))
+  
 }
 
 nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
@@ -332,3 +350,7 @@ family_malaise_input$trap_types <- family_malaise_input$trap_types %>%
 # tibble
 family_malaise_input$trap_matrix <- family_malaise_input$trap_matrix[rownames(family_malaise_input$trap_matrix) %in% family_malaise_input$trap_types$sampling_event,]
   
+family_malaise_nmds <- nmds_analysis(family_malaise_input, 
+                             min_tries = 20,
+                             max_tries = 100,
+                             malaise_analysis = T)
