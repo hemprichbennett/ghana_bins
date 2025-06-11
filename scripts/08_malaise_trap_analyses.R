@@ -38,6 +38,11 @@ malaise_trap_deployments <- read_csv(here('data', 'processed_data',
   mutate(coarse_timing = ifelse(start_classification %in% c('00:00:00', "18:00:00"),
                                 'Night', 'Day'))
 
+
+# save malaise trap metadata, as we'll want to use it again in the next script
+write_csv(malaise_trap_deployments, file = here('data', 'processed_data',
+                                                'malaise_trap_metadata.csv'))
+
 all_arthropod_data <- read_csv(here('data', 'processed_data', 
                                     'bold_and_earthcape_combined.csv'))
 

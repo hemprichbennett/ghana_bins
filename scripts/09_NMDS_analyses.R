@@ -11,6 +11,8 @@ habitat_data <- read_csv('data/raw_data/lot_habitat_classifications.csv') %>%
 
 source(here('parameters.R'))
 
+malaise_trap_metadata <- read_csv(here('data', 'processed_data',
+                                       'malaise_trap_metadata.csv'))
 
 too_many_cols <- read_csv(, 
                           file = here('data', 'processed_data', 
