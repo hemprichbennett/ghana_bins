@@ -87,6 +87,8 @@ malaise_trap_arthropods <- big_in_tib %>%
   arrange(Order, Family) %>%
   select(Order, Family, Day, Night)
   
+write_csv(malaise_trap_arthropods, 
+          file = here('results', 'taxonomic_summaries', 'malaise_trap_arthropods.csv'))
 
 # Pest species ------------------------------------------------------------
 
