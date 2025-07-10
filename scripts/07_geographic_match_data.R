@@ -4,6 +4,10 @@ library(tidyverse)
 library(here)
 library(countrycode)
 
+# data of the centroids of every country, sourced from
+# https://github.com/gavinr/world-countries-centroids/blob/master/dist/countries.csv
+country_centroids <- read_csv(here('data', 'raw_data', 'country_centroids.csv'))
+
 # a tibble where every row is a sample we've collected
 bold_and_earthcape_combined <- read_csv(
   file = here('data', 'processed_data', 
@@ -92,7 +96,7 @@ country_nshared_tib <- combined_tib %>%
   ungroup() %>%
   slice_max(nbins, n = 20) %>%
   mutate(country = fct(country))
-
+library(geosphere)
 top20_plot <- ggplot(country_nshared_tib, aes(x = nbins, y = fct_rev(country), fill = geographic_region)) +
   geom_bar(stat = 'identity')+
   theme_bw()+
@@ -106,6 +110,32 @@ top20_plot
 ggsave(plot = top20_plot,
        filename = here('figures', 'fig_5_topcountries_plot.png'),
        width = 8)
+
+
+
+# Subplot for distance between Ghana and top20 country --------------------
+
+# make a matrix of all countries locations, to use as a distance matrix
+coord_mat <- country_centroids %>%
+  select(longitude, latitude) %>%
+  as.matrix(dimnames = country_centroids$COUNTRY)
+
+# calculate distances
+distances_matrix <- distm(coord_mat)
+rownames(distances_matrix) <- country_centroids$COUNTRY
+colnames(distances_matrix) <- country_centroids$COUNTRY
+
+# tidy the distance matrix
+tidier_dist <- as_tibble(distances_matrix, rownames = 'country_a') %>%
+  pivot_longer(cols = -'country_a', names_to = 'country_b', values_to = 'distance_m') %>%
+  mutate(distance_km = distance_m / 1000)
+
+# filter it for just our desired data
+desired_values <- tidier %>%
+  filter(country_a == 'Ghana',
+         country_b %in% country_nshared_tib$country)
+
+
 
 # Analyse trap-composition of BINs with no public matches -----------------
 
