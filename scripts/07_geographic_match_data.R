@@ -3,6 +3,7 @@
 library(tidyverse)
 library(here)
 library(countrycode)
+library(geosphere)
 
 # data of the centroids of every country, sourced from
 # https://github.com/gavinr/world-countries-centroids/blob/master/dist/countries.csv
@@ -90,14 +91,20 @@ ggplot(region_bin_traps, aes(fill = trap_type, x = geographic_region,
 
 # Make a plot of the top 20 countries -------------------------------------
 
+# calculate the number of shared BINs
 country_nshared_tib <- combined_tib %>%
   group_by(country, geographic_region) %>%
   summarise(nbins = n()) %>%
-  ungroup() %>%
-  slice_max(nbins, n = 20) %>%
+  ungroup() 
+
+# find the top 20
+top_20_nshared_tib <- country_nshared_tib %>%
+  # Ghana is in the top 20, so begin by finding 21, then excluding it
+  slice_max(nbins, n = 21) %>%
+  filter(country!= 'Ghana') %>%
   mutate(country = fct(country))
-library(geosphere)
-top20_plot <- ggplot(country_nshared_tib, aes(x = nbins, y = fct_rev(country), fill = geographic_region)) +
+
+top20_plot <- ggplot(top_20_nshared_tib, aes(x = nbins, y = fct_rev(country), fill = geographic_region)) +
   geom_bar(stat = 'identity')+
   theme_bw()+
   scale_fill_viridis_d()+
@@ -131,11 +138,28 @@ tidier_dist <- as_tibble(distances_matrix, rownames = 'country_a') %>%
   mutate(distance_km = distance_m / 1000)
 
 # filter it for just our desired data
-desired_values <- tidier %>%
+distances_and_nbins_tib <- tidier_dist %>%
   filter(country_a == 'Ghana',
-         country_b %in% country_nshared_tib$country)
+         country_b %in% country_nshared_tib$country) %>%
+# join it with the country_nshared_tib
+  left_join(country_nshared_tib, join_by(country_b == country))
 
+distance_plot <- ggplot(distances_and_nbins_tib, aes(x = nbins, y = distance_km,
+                                    colour = geographic_region))+
+  geom_point()+ 
+  theme_bw()+
+  scale_x_log10()+
+  scale_y_log10()+
+  scale_colour_viridis_d()+
+  xlab('Number of publicly available BINs shared with our dataset')+
+  ylab('Distance from Ghana (km)')+
+  theme(legend.position = 'bottom')+ 
+  labs(colour = 'Geographic area')+
+  facet_wrap(.~ geographic_region, ncol =2)
 
+distance_plot
+# Make this a multipanel plot with the barplot. Could also remove the 'top 20'
+# restriction and just analyse distance x n bin shared for all countries?
 
 # Analyse trap-composition of BINs with no public matches -----------------
 
