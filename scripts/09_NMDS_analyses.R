@@ -82,7 +82,8 @@ nmds_input_generator <- function(taxa_grouping, min_taxa_threshold = NA,
     filter(sampling_event %in% rownames(out_mat))
   
   return(list(trap_matrix = out_mat, 
-              trap_types = trap_types))
+              trap_types = trap_types,
+              taxa_grouping = taxa_grouping))
 }
 
 
@@ -103,7 +104,8 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20,
   site.scores <- as.data.frame(scores(big_nmds, "site"))  #Using the scores function from vegan to extract the site scores and convert to a data.frame
   site.scores$sampling_event <- as.numeric(rownames(site.scores))  # create a column of site names, from the rownames of data.scores
   site.scores <- site.scores %>%
-    left_join(input_list$trap_types)
+    left_join(input_list$trap_types) %>%
+    mutate(taxa_grouping = input_list$taxa_grouping)
   
   
   species.scores <- as.data.frame(scores(big_nmds, "species"))  #Using the scores function from vegan to extract the species scores and convert to a data.frame
@@ -111,11 +113,13 @@ nmds_analysis <- function(input_list, k = 2, min_tries = 20, max_tries = 20,
   
   trap_centroid <- site.scores %>%
     group_by(trap_type) %>%
-    summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
+    summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))%>%
+    mutate(taxa_grouping = input_list$taxa_grouping)
   
   habitat_centroid <- site.scores %>%
     group_by(habitat_type) %>%
-    summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
+    summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))%>%
+    mutate(taxa_grouping = input_list$taxa_grouping)
   
   # if this is an analysis of malaise-trap data ONLY, we have temporal data
   # that will also need analysing and returning
@@ -193,6 +197,7 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
 
 
 # NMDS analyses ---------------------------------------------------------------
+
 
 
 ## Family-level
@@ -297,6 +302,38 @@ bin_habitat_plot <- nmds_plot(input_list = bin_nmds,
 bin_habitat_plot
 
 ggsave(here('figures', 'nmds', 'bin_habitat_nmds.png'),bin_habitat_plot, height = 12, width = 10)
+
+
+# Combine 3 levels of plots for one big plot ------------------------------
+
+
+nmds_scores <- bind_rows(order_nmds$scores, family_nmds$scores, bin_nmds$scores)
+nmds_centroids <- bind_rows(order_nmds$trap_centroid, 
+                            family_nmds$trap_centroid,
+                            bin_nmds$trap_centroid)
+
+# plot containing all but the centroids
+ggplot(data=nmds_scores,
+       aes(
+         x=NMDS1,
+         y=NMDS2,
+         group=trap_type,
+         shape=trap_type)) + 
+  geom_point(data=nmds_centroids, size=5,# color="black",
+             aes(colour=trap_type, fill = trap_type, shape=trap_type), show.legend=FALSE)+
+  stat_ellipse(show.legend=FALSE) +
+  geom_point(aes(colour=trap_type)) + # add the point markers
+  scale_colour_viridis_d(option = 'D')+
+  scale_fill_viridis_d(option = 'D')+
+  facet_wrap(.~ taxa_grouping, scales = 'free')+
+  #scale_colour_manual(values=c("A" = "red", "B" = "blue")) +
+  #coord_equal() +
+  theme_bw()+
+  theme(legend.position = 'bottom',
+        text=element_text(size=10))+
+  labs(colour = 'Trap type', shape = 'Trap type')+
+  # increase point size in legend
+  guides(colour = guide_legend(override.aes = list(size=10)))
 
 # Analyses ----------------------------------------------------------------
 
