@@ -266,7 +266,37 @@ order_habitat_plot
 ggsave(here('figures', 'nmds', 'order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
 #ggsave(here('figures', 'fig_8_order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
 
+## BIN-level
 
+bin_nmds_input <- nmds_input_generator('bin', min_taxa_threshold = nmds_inclusion_threshold,
+                                         min_trap_threshold = nmds_inclusion_threshold)
+
+bin_nmds <- nmds_analysis(bin_nmds_input,
+                            min_tries = 20,
+                            max_tries = 100)
+
+## trapwise plots
+
+bin_trap_plot <- nmds_plot(input_list = bin_nmds,
+                             title_str = 'BIN-level NMDS',
+                             viridis_option = 'B',
+                             plot_by = 'trap_type')
+
+bin_trap_plot
+
+ggsave(here('figures', 'nmds', 'bin_trap_nmds.png'),bin_trap_plot, height = 12, width = 10)
+ggsave(here('figures', 'fig_2_bin_trap_nmds.png'),bin_trap_plot, height = 12, width = 12)
+
+## habitatwise plots
+
+bin_habitat_plot <- nmds_plot(input_list = bin_nmds,
+                                title_str = 'BIN-level NMDS',
+                                viridis_option = 'D',
+                                plot_by = 'habitat_type')
+
+bin_habitat_plot
+
+ggsave(here('figures', 'nmds', 'bin_habitat_nmds.png'),bin_habitat_plot, height = 12, width = 10)
 
 # Analyses ----------------------------------------------------------------
 
