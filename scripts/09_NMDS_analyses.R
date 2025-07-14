@@ -198,7 +198,9 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
 
 # NMDS analyses ---------------------------------------------------------------
 
-
+for(current_taxa in c('order', 'family', 'genus', 'bin')){
+  print(current_taxa)
+}
 
 ## Family-level
 
@@ -307,11 +309,34 @@ ggsave(here('figures', 'nmds', 'bin_habitat_nmds.png'),bin_habitat_plot, height 
 # Combine 3 levels of plots for one big plot ------------------------------
 
 
-nmds_scores <- bind_rows(order_nmds$scores, family_nmds$scores, bin_nmds$scores)
+nmds_scores <- bind_rows(order_nmds$scores, 
+                         family_nmds$scores, 
+                         bin_nmds$scores) %>%
+  # capitalise the taxonomic ranks for plotting
+  mutate(taxa_grouping = str_to_title(taxa_grouping),
+         # convert from 'Bin' to 'BIN'
+         taxa_grouping = gsub('Bin', 'BIN', taxa_grouping),
+         # turn it into a factor, so we can specify a non-alphabetical plotting
+         # order
+         taxa_grouping = as.factor(taxa_grouping),
+         # specify the factor order
+         taxa_grouping = fct_relevel(taxa_grouping, c('Order', 'Family', 
+                                                      'Genus', 'BIN')))
+
 nmds_centroids <- bind_rows(order_nmds$trap_centroid, 
                             family_nmds$trap_centroid,
-                            bin_nmds$trap_centroid)
-
+                            bin_nmds$trap_centroid) %>%
+  # capitalise the taxonomic ranks for plotting
+  mutate(taxa_grouping = str_to_title(taxa_grouping),
+         # convert from 'Bin' to 'BIN'
+         taxa_grouping = gsub('Bin', 'BIN', taxa_grouping),
+         # turn it into a factor, so we can specify a non-alphabetical plotting
+         # order
+         taxa_grouping = as.factor(taxa_grouping),
+         # specify the factor order
+         taxa_grouping = fct_relevel(taxa_grouping, c('Order', 'Family', 
+                                                      'Genus', 'BIN')))
+  
 # plot containing all but the centroids
 ggplot(data=nmds_scores,
        aes(
