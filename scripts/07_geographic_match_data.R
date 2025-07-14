@@ -99,9 +99,7 @@ country_nshared_tib <- combined_tib %>%
 
 # find the top 20
 top_20_nshared_tib <- country_nshared_tib %>%
-  # Ghana is in the top 20, so begin by finding 21, then excluding it
-  slice_max(nbins, n = 21) %>%
-  filter(country!= 'Ghana') %>%
+  slice_max(nbins, n = 20) %>%
   mutate(country = fct(country))
 
 top20_plot <- ggplot(top_20_nshared_tib, aes(x = nbins, y = fct_rev(country), fill = geographic_region)) +
@@ -118,7 +116,13 @@ ggsave(plot = top20_plot,
        filename = here('figures', 'fig_5_topcountries_plot.png'),
        width = 8)
 
-
+top_20_nshared_tib %>%
+  mutate(Rank = seq(1,20)) %>%
+  relocate(Rank) %>%
+  rename(Country = country,
+         `Geographic region` = geographic_region,
+         `Number of shared BINs` = nbins) %>%
+  write_csv(here('results', 'top_20_shared_bins.csv'))
 
 # Subplot for distance between Ghana and top20 country --------------------
 
@@ -144,22 +148,21 @@ distances_and_nbins_tib <- tidier_dist %>%
 # join it with the country_nshared_tib
   left_join(country_nshared_tib, join_by(country_b == country))
 
-distance_plot <- ggplot(distances_and_nbins_tib, aes(x = nbins, y = distance_km,
-                                    colour = geographic_region))+
+distance_plot <- ggplot(distances_and_nbins_tib, aes(x = nbins, y = distance_km
+                                    ))+
   geom_point()+ 
   theme_bw()+
   scale_x_log10()+
   scale_y_log10()+
-  scale_colour_viridis_d()+
+  #scale_colour_viridis_d()+
   xlab('Number of publicly available BINs shared with our dataset')+
   ylab('Distance from Ghana (km)')+
-  theme(legend.position = 'bottom')+ 
   labs(colour = 'Geographic area')+
-  facet_wrap(.~ geographic_region, ncol =2)
+  facet_wrap(.~ geographic_region, ncol =3)
 
 distance_plot
-# Make this a multipanel plot with the barplot. Could also remove the 'top 20'
-# restriction and just analyse distance x n bin shared for all countries?
+ggsave(plot = distance_plot,
+       filename = here('figures', 'fig_5_dist_and_sharded_bins.png'))
 
 # Analyse trap-composition of BINs with no public matches -----------------
 
