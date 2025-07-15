@@ -197,9 +197,25 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
 
 
 # NMDS analyses ---------------------------------------------------------------
-
+nmds_inputs <- list()
+nmds_outputs <- list()
+nmds_plots <- list()
 for(current_taxa in c('order', 'family', 'genus', 'bin')){
   print(current_taxa)
+  nmds_inputs[[current_taxa]] <- nmds_input_generator(current_taxa, 
+                                                      min_taxa_threshold = nmds_inclusion_threshold,
+                                                      min_trap_threshold = nmds_inclusion_threshold)
+  
+  nmds_outputs[[current_taxa]] <- nmds_analysis(nmds_inputs[[current_taxa]], 
+                                                min_tries = 20,
+                                                max_tries = 100)
+  
+  nmds_plots[[current_taxa]] <- nmds_plot(input_list = nmds_outputs[[current_taxa]],
+                                          title_str = paste0(str_to_title(current_taxa), '-level NMDS'),
+                                          viridis_option = 'B',
+                                          plot_by = 'trap_type')
+  
+  ggsave(here('figures', 'nmds', paste0(current_taxa, '_trap_nmds.png')), nmds_plots[[current_taxa]], height = 12, width = 10)
 }
 
 ## Family-level
