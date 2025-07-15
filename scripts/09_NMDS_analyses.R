@@ -199,7 +199,8 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
 # NMDS analyses ---------------------------------------------------------------
 nmds_inputs <- list()
 nmds_outputs <- list()
-nmds_plots <- list()
+nmds_trap_plots <- list()
+nmds_habitat_plots <- list()
 for(current_taxa in c('order', 'family', 'genus', 'bin')){
   print(current_taxa)
   nmds_inputs[[current_taxa]] <- nmds_input_generator(current_taxa, 
@@ -210,124 +211,31 @@ for(current_taxa in c('order', 'family', 'genus', 'bin')){
                                                 min_tries = 20,
                                                 max_tries = 100)
   
-  nmds_plots[[current_taxa]] <- nmds_plot(input_list = nmds_outputs[[current_taxa]],
+  nmds_trap_plots[[current_taxa]] <- nmds_plot(input_list = nmds_outputs[[current_taxa]],
                                           title_str = paste0(str_to_title(current_taxa), '-level NMDS'),
                                           viridis_option = 'B',
                                           plot_by = 'trap_type')
   
-  ggsave(here('figures', 'nmds', paste0(current_taxa, '_trap_nmds.png')), nmds_plots[[current_taxa]], height = 12, width = 10)
+  ggsave(here('figures', 'nmds', paste0(current_taxa, '_trap_nmds.png')), nmds_trap_plots[[current_taxa]], height = 12, width = 10)
+  
+  nmds_habitat_plots[[current_taxa]] <- nmds_plot(input_list = nmds_outputs[[current_taxa]],
+                                               title_str = paste0(str_to_title(current_taxa), '-level NMDS'),
+                                               viridis_option = 'B',
+                                               plot_by = 'habitat_type')
+  
+  ggsave(here('figures', 'nmds', paste0(current_taxa, '_habitat_nmds.png')), nmds_habitat_plots[[current_taxa]], height = 12, width = 10)
+  
 }
 
-## Family-level
-
-family_nmds_input <- nmds_input_generator('family', 
-                                          min_taxa_threshold = nmds_inclusion_threshold,
-                                          min_trap_threshold = nmds_inclusion_threshold)
-
-family_nmds <- nmds_analysis(family_nmds_input, 
-                    min_tries = 20,
-                    max_tries = 100)
-
-### trapwise plots
-
-family_trap_plot <- nmds_plot(input_list = family_nmds,
-          title_str = 'Family-level NMDS',
-          viridis_option = 'B',
-          plot_by = 'trap_type')
 
 
-family_trap_plot
+# Combine 4 levels of plots for one big plot ------------------------------
 
-ggsave(here('figures', 'nmds', 'family_trap_nmds.png'), family_trap_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_3_family_trap_nmds.png'), family_trap_plot, height = 12, width = 12)
-
-
-### habitatwise plots
-
-family_habitat_plot <- nmds_plot(input_list = family_nmds,
-                              title_str = 'Family-level NMDS',
-                              viridis_option = 'D',
-                              plot_by = 'habitat_type')
-
-
-family_habitat_plot
-
-ggsave(here('figures', 'nmds', 'family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
-#ggsave(here('figures', 'fig_7_family_habitat_nmds.png'), family_habitat_plot, height = 12, width = 10)
-
-
-## Order-level
-
-order_nmds_input <- nmds_input_generator('order', min_taxa_threshold = nmds_inclusion_threshold,
-                                         min_trap_threshold = nmds_inclusion_threshold)
-
-order_nmds <- nmds_analysis(order_nmds_input,
-                   min_tries = 20,
-                   max_tries = 100)
-
-## trapwise plots
-
-order_trap_plot <- nmds_plot(input_list = order_nmds,
-                         title_str = 'Order-level NMDS',
-                        viridis_option = 'B',
-                        plot_by = 'trap_type')
-
-order_trap_plot
-
-ggsave(here('figures', 'nmds', 'order_trap_nmds.png'),order_trap_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_2_order_trap_nmds.png'),order_trap_plot, height = 12, width = 12)
-
-## habitatwise plots
-
-order_habitat_plot <- nmds_plot(input_list = order_nmds,
-                             title_str = 'Order-level NMDS',
-                             viridis_option = 'D',
-                             plot_by = 'habitat_type')
-
-order_habitat_plot
-
-ggsave(here('figures', 'nmds', 'order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
-#ggsave(here('figures', 'fig_8_order_habitat_nmds.png'),order_habitat_plot, height = 12, width = 10)
-
-## BIN-level
-
-bin_nmds_input <- nmds_input_generator('bin', min_taxa_threshold = nmds_inclusion_threshold,
-                                         min_trap_threshold = nmds_inclusion_threshold)
-
-bin_nmds <- nmds_analysis(bin_nmds_input,
-                            min_tries = 20,
-                            max_tries = 100)
-
-## trapwise plots
-
-bin_trap_plot <- nmds_plot(input_list = bin_nmds,
-                             title_str = 'BIN-level NMDS',
-                             viridis_option = 'B',
-                             plot_by = 'trap_type')
-
-bin_trap_plot
-
-ggsave(here('figures', 'nmds', 'bin_trap_nmds.png'),bin_trap_plot, height = 12, width = 10)
-ggsave(here('figures', 'fig_2_bin_trap_nmds.png'),bin_trap_plot, height = 12, width = 12)
-
-## habitatwise plots
-
-bin_habitat_plot <- nmds_plot(input_list = bin_nmds,
-                                title_str = 'BIN-level NMDS',
-                                viridis_option = 'D',
-                                plot_by = 'habitat_type')
-
-bin_habitat_plot
-
-ggsave(here('figures', 'nmds', 'bin_habitat_nmds.png'),bin_habitat_plot, height = 12, width = 10)
-
-
-# Combine 3 levels of plots for one big plot ------------------------------
-
-
-nmds_scores <- bind_rows(order_nmds$scores, 
-                         family_nmds$scores, 
-                         bin_nmds$scores) %>%
+nmds_scores <- bind_rows(nmds_outputs[['order']]$scores, 
+                         nmds_outputs[['family']]$scores,
+                         nmds_outputs[['genus']]$scores,
+                         nmds_outputs[['bin']]$scores
+                         ) %>%
   # capitalise the taxonomic ranks for plotting
   mutate(taxa_grouping = str_to_title(taxa_grouping),
          # convert from 'Bin' to 'BIN'
@@ -339,9 +247,10 @@ nmds_scores <- bind_rows(order_nmds$scores,
          taxa_grouping = fct_relevel(taxa_grouping, c('Order', 'Family', 
                                                       'Genus', 'BIN')))
 
-nmds_centroids <- bind_rows(order_nmds$trap_centroid, 
-                            family_nmds$trap_centroid,
-                            bin_nmds$trap_centroid) %>%
+nmds_centroids <- bind_rows(nmds_outputs[['order']]$trap_centroid, 
+                            nmds_outputs[['family']]$trap_centroid,
+                            nmds_outputs[['genus']]$trap_centroid,
+                            nmds_outputs[['bin']]$trap_centroid) %>%
   # capitalise the taxonomic ranks for plotting
   mutate(taxa_grouping = str_to_title(taxa_grouping),
          # convert from 'Bin' to 'BIN'
@@ -384,18 +293,14 @@ ggplot(data=nmds_scores,
 
 
 ## order-level analyses
-order_centroid <- order_nmds$scores %>%
+order_centroid <- nmds_outputs[['order']]$scores %>%
   group_by(trap_type) %>%
   summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
 
 
 
-# z <- order_nmds$nmds_analysis$dist
-# temp_dist <- vegdist(order_nmds_input$trap_matrix)
-# 
-# metaMDS(temp_dist)
 
-order_test <- adonis2(order_nmds$dist_mat~ order_nmds$scores$trap_type + order_nmds$scores$habitat_type, 
+order_test <- adonis2(nmds_outputs[['order']]$dist_mat~ nmds_outputs[['order']]$scores$trap_type + nmds_outputs[['order']]$scores$habitat_type, 
                       permutations = 1e3, by = 'terms')
 
 order_test
@@ -410,7 +315,7 @@ order_test %>%
 
 ## family-level analyses
 
-family_test <- adonis2(family_nmds$dist_mat~family_nmds$scores$trap_type + family_nmds$scores$habitat_type, 
+family_test <- adonis2(nmds_outputs[['family']]$dist_mat~nmds_outputs[['family']]$scores$trap_type + nmds_outputs[['family']]$scores$habitat_type, 
                        permutations = 1e3, by = 'terms')
 
 family_test
@@ -428,7 +333,7 @@ order_test$aov.tab
 
 # test for betadispersion
 library(broom)
-order_bd <- betadisper(dist(order_nmds_input$trap_matrix), order_nmds$scores$trap_type)
+order_bd <- betadisper(dist(nmds_inputs[['order']]$trap_matrix), nmds_outputs[['order']]$scores$trap_type)
 # is the data betadispersed? ("Is there difference in within-group variation 
 # between groups." I think.)
 anova(order_bd) %>%
@@ -436,7 +341,7 @@ anova(order_bd) %>%
   write_csv(here('results', 'adonis', 'order_betadispersion.csv'))
 
 
-family_bd <- betadisper(dist(family_nmds_input$trap_matrix), family_nmds$scores$trap_type)
+family_bd <- betadisper(dist(nmds_inputs[['family']]$trap_matrix), nmds_outputs[['family']]$scores$trap_type)
 # is the data betadispersed? ("Is there difference in within-group variation 
 # between groups." I think.)
 anova(family_bd) %>%
@@ -452,7 +357,7 @@ anova(family_bd) %>%
 # family level
 
 # filter just for the desired values
-family_malaise_input <- family_nmds_input
+family_malaise_input <- nmds_inputs[['family']]
 
 family_malaise_input$trap_types <- family_malaise_input$trap_types %>% 
   filter(trap_type == 'Malaise') %>%
@@ -488,7 +393,7 @@ adonis2(family_malaise_nmds$dist_mat~family_malaise_nmds$scores$coarse_timing + 
 # order level
 
 # filter just for the desired values
-order_malaise_input <- order_nmds_input
+order_malaise_input <- nmds_inputs[['order']]
 
 order_malaise_input$trap_types <- order_malaise_input$trap_types %>% 
   filter(trap_type == 'Malaise') %>%
