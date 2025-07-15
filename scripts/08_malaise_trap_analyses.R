@@ -203,7 +203,7 @@ bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of un
   geom_boxplot()+
   theme_bw()+
   ylab('Number of unique BINs')+
-  xlab('Bottle deployent time')+
+  xlab('Bottle deployment time')+
   theme(text = element_text(size = 15))+
   labs(tag = 'B')
 bin_boxplot
