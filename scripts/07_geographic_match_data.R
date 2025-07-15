@@ -148,15 +148,15 @@ distances_and_nbins_tib <- tidier_dist %>%
 # join it with the country_nshared_tib
   left_join(country_nshared_tib, join_by(country_b == country))
 
-distance_plot <- ggplot(distances_and_nbins_tib, aes(x = nbins, y = distance_km
+distance_plot <- ggplot(distances_and_nbins_tib, aes(y = nbins, x = distance_km
                                     ))+
   geom_point()+ 
   theme_bw()+
   scale_x_log10()+
   scale_y_log10()+
   #scale_colour_viridis_d()+
-  xlab('Number of publicly available BINs shared with our dataset')+
-  ylab('Distance from Ghana (km)')+
+  ylab('Number of publicly available BINs shared with our dataset')+
+  xlab('Distance from Ghana (km)')+
   labs(colour = 'Geographic area')+
   facet_wrap(.~ geographic_region, ncol =3)
 
