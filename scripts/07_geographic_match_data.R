@@ -146,7 +146,8 @@ distances_and_nbins_tib <- tidier_dist %>%
   filter(country_a == 'Ghana',
          country_b %in% country_nshared_tib$country) %>%
 # join it with the country_nshared_tib
-  left_join(country_nshared_tib, join_by(country_b == country))
+  left_join(country_nshared_tib, join_by(country_b == country)) %>%
+  filter(country_b != 'Ghana')
 
 distance_plot <- ggplot(distances_and_nbins_tib, aes(y = nbins, x = distance_km
                                     ))+
