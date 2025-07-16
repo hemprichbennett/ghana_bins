@@ -15,5 +15,5 @@ all_public_bins <- vroom(here('data', 'raw_data', 'BOLD_Public.11-Jul-2025',
   summarise(nsamples = length(bin_uri),
          nbins = length(unique(bin_uri)))
 
-write_csv(here('data', 'processed_data', 'country_nsamples_public.csv'),
-          all_public_bins)  
+write_csv(all_public_bins, here('data', 'processed_data', 'country_nsamples_public.csv')
+          )  
