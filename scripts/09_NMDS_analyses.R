@@ -263,7 +263,7 @@ nmds_centroids <- bind_rows(nmds_outputs[['order']]$trap_centroid,
                                                       'Genus', 'BIN')))
   
 # plot containing all but the centroids
-ggplot(data=nmds_scores,
+big_nmds_plot <- ggplot(data=nmds_scores,
        aes(
          x=NMDS1,
          y=NMDS2,
@@ -284,6 +284,8 @@ ggplot(data=nmds_scores,
   labs(colour = 'Trap type', shape = 'Trap type')+
   # increase point size in legend
   guides(colour = guide_legend(override.aes = list(size=10)))
+
+ggsave(here('figures', 'nmds', 'fig_x_big_nmds_plot.png'), big_nmds_plot)
 
 # Analyses ----------------------------------------------------------------
 
