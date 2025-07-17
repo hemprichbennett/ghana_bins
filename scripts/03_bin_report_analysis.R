@@ -158,3 +158,10 @@ main_df %>%
               names_sort = T) %>%
   write_csv('results/unique_data/mafi_bin_uniqueness.csv')
 
+# summary information for the 200 most common BINs
+retention_threshold <- 200
+abundant_bin_summary <- main_df %>%
+  group_by(BIN, available, order, family, species) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  head(retention_threshold) 
