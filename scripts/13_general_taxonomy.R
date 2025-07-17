@@ -90,18 +90,52 @@ malaise_trap_arthropods <- big_in_tib %>%
 write_csv(malaise_trap_arthropods, 
           file = here('results', 'taxonomic_summaries', 'malaise_trap_arthropods.csv'))
 
+
+# make a sheet with just the time-identified malaise trap captures, and the heath
+# trap captures
+night_time_families <- full_join(malaise_trap_arthropods, 
+                                 family_trap_counts) %>%
+  # select only the columns we care about
+  select(Order, Family, Day, Night, Heath) %>%
+  # remove any rows containing zero families from the two remaining trapping 
+  # methods
+  filter(sum(Day, Night, Heath)> 0)
+
+write_csv(night_time_families,
+          file = here('results', 'taxonomic_summaries', 'malaise_and_heath.csv')
+          )
+
 # Pest species ------------------------------------------------------------
 
 # compare with a dataset downloaded from DEFRA, 2025-07-09
 # https://planthealthportal.defra.gov.uk/pests-and-diseases/uk-plant-health-risk-register/downloadEntireRiskRegister.cfm
 defra_pests <- read_csv(here('data', 'raw_data', 'Risk Register 09_July_2025 16_43_13.csv')) %>%
-  janitor::clean_names()
+  janitor::clean_names() %>%
+  rename(common_name = common_name_or_abbreviation,
+         binomial_name = pest_name)
+
+# add data from https://cipotato.org/riskatlasforafrica/
+potato_pests <- read_csv(here('data', 'raw_data', 'cipotato_pests.csv')) %>%
+  janitor::clean_names() %>%
+  rename(major_hosts = group)
+
+pest_sp <- bind_rows(defra_pests, potato_pests)
 
 # combine it with our species occurrences
-pest_detections <- inner_join(species_trap_counts, defra_pests, by = c('Species' = 'pest_name'))
+pest_detections <- inner_join(species_trap_counts, pest_sp, by = c('Species' = 'binomial_name'))
 
+# add pest list from https://cipotato.org/riskatlasforafrica/table-of-contents/
 
 # write file
 write_csv(pest_detections, 
           file = here('results', 'taxonomic_summaries', 'pest_detections.csv'))
 
+
+# make a tibble of only pest detections
+pest_occurrence_tib <- big_in_tib %>%
+  filter(Species %in% pest_sp$binomial_name)
+
+t_leucotreta_detections <- big_in_tib %>%
+  filter(Species == 'Thaumatotibia leucotreta') %>%
+  group_by(date, lot) %>%
+  count()
