@@ -44,6 +44,7 @@ public_matches <- read_csv(here('data', 'processed_data', 'bold_public_bin_match
         genus_name, species_name) %>%
   distinct()
 
+per_country_public_summary <- read_csv(here('data', 'processed_data', 'country_nsamples_public.csv'))
 
 # combine datasets
 
@@ -94,15 +95,15 @@ ggplot(region_bin_traps, aes(fill = trap_type, x = geographic_region,
 # calculate the number of shared BINs
 country_nshared_tib <- combined_tib %>%
   group_by(country, geographic_region) %>%
-  summarise(nbins = n()) %>%
+  summarise(n_shared_bins = n()) %>%
   ungroup() 
 
 # find the top 20
 top_20_nshared_tib <- country_nshared_tib %>%
-  slice_max(nbins, n = 20) %>%
+  slice_max(n_shared_bins, n = 20) %>%
   mutate(country = fct(country))
 
-top20_plot <- ggplot(top_20_nshared_tib, aes(x = nbins, y = fct_rev(country), fill = geographic_region)) +
+top20_plot <- ggplot(top_20_nshared_tib, aes(x = n_shared_bins, y = fct_rev(country), fill = geographic_region)) +
   geom_bar(stat = 'identity')+
   theme_bw()+
   scale_fill_viridis_d()+
@@ -121,7 +122,7 @@ top_20_nshared_tib %>%
   relocate(Rank) %>%
   rename(Country = country,
          `Geographic region` = geographic_region,
-         `Number of shared BINs` = nbins) %>%
+         `Number of shared BINs` = n_shared_bins) %>%
   write_csv(here('results', 'top_20_shared_bins.csv'))
 
 # Subplot for distance between Ghana and top20 country --------------------
@@ -147,13 +148,30 @@ distances_and_nbins_tib <- tidier_dist %>%
          country_b %in% country_nshared_tib$country) %>%
 # join it with the country_nshared_tib
   left_join(country_nshared_tib, join_by(country_b == country)) %>%
+  left_join(per_country_public_summary, join_by(country_b == country)) %>%
   filter(country_b != 'Ghana')
 
-distance_plot <- ggplot(distances_and_nbins_tib, aes(y = nbins, x = distance_km
+# quick function to kill scientific notation from axes etc, from https://r-charts.com/ggplot2/axis/#scales
+marks_no_sci <- function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)  
+  
+scatterplot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = nbins))  +
+  geom_point()+
+  facet_wrap(.~ geographic_region, ncol =3)+
+  theme_bw()+
+  scale_x_log10(labels = marks_no_sci)+
+  scale_y_log10()+
+  ylab('Number of publicly available BINs shared with our dataset')+
+  xlab('Number of publicly available BINs')
+scatterplot  
+
+ggsave(plot = scatterplot,
+       filename = here('figures', 'fig_5_npublic_and_shared_bins.png'))
+
+distance_plot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = distance_km
                                     ))+
   geom_point()+ 
   theme_bw()+
-  scale_x_log10()+
+  scale_x_log10(limits = c(1, NA))+
   scale_y_log10()+
   #scale_colour_viridis_d()+
   ylab('Number of publicly available BINs shared with our dataset')+
@@ -163,7 +181,7 @@ distance_plot <- ggplot(distances_and_nbins_tib, aes(y = nbins, x = distance_km
 
 distance_plot
 ggsave(plot = distance_plot,
-       filename = here('figures', 'fig_5_dist_and_sharded_bins.png'))
+       filename = here('figures', 'fig_4_dist_and_shared_bins.png'))
 
 # Analyse trap-composition of BINs with no public matches -----------------
 
@@ -174,10 +192,10 @@ unmatched <- bold_and_earthcape_combined %>%
 
 unmatched_summary <- unmatched %>%
   group_by(order, trap_type) %>%
-  summarise(nsamples = n(), nbins = length(unique(bin)))
+  summarise(nsamples = n(), n_shared_bins = length(unique(bin)))
 
 unique_sample_trapping <- ggplot(unmatched_summary, aes(x = trap_type,
-                              y = nbins,
+                              y = n_shared_bins,
                               fill = trap_type))+
   geom_bar(position='dodge', stat='identity')+
   facet_wrap(.~ order, scales = 'free_y')+
@@ -198,7 +216,7 @@ trap_and_status <- bold_and_earthcape_combined %>%
            ifelse(bin %in% public_matches$bin, 'Already publicly available',
                   'Not publicly available')) %>%
   group_by(order, trap_type, publicly_available) %>%
-  summarise(nsamples = n(), nbins = length(unique(bin)))
+  summarise(nsamples = n(), n_shared_bins = length(unique(bin)))
 
 
 # A function to ensure that the y axis labels' breaks are always integers, taken
@@ -213,7 +231,7 @@ integer_breaks <- function(n = 5, ...) {
 }
 
 trap_bin_availability_plot <- ggplot(trap_and_status, aes(x = trap_type,
-                              y = nbins,
+                              y = n_shared_bins,
                               #colour = trap_type,
                             fill = publicly_available))+
   geom_bar(position='stack', stat='identity')+
