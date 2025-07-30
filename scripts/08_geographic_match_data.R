@@ -4,6 +4,7 @@ library(tidyverse)
 library(here)
 library(countrycode)
 library(geosphere)
+library(broom)
 
 # data of the centroids of every country, sourced from
 # https://github.com/gavinr/world-countries-centroids/blob/master/dist/countries.csv
@@ -125,7 +126,7 @@ top_20_nshared_tib %>%
          `Number of shared BINs` = n_shared_bins) %>%
   write_csv(here('results', 'top_20_shared_bins.csv'))
 
-# Subplot for distance between Ghana and top20 country --------------------
+# Organise data --------------------
 
 # make a matrix of all countries locations, to use as a distance matrix
 coord_mat <- country_centroids %>%
@@ -151,33 +152,48 @@ distances_and_nbins_tib <- tidier_dist %>%
   left_join(per_country_public_summary, join_by(country_b == country)) %>%
   filter(country_b != 'Ghana')
 
+
+# Model -------------------------------------------------------------------
+
+
+shared_bins_mod <- lm(n_shared_bins ~ distance_km + nsamples, data = distances_and_nbins_tib)
+plot(shared_bins_mod,2)
+broom::glance(shared_bins_mod)
+broom::tidy(shared_bins_mod)
+
+
+# Plots -------------------------------------------------------------------
+
 # quick function to kill scientific notation from axes etc, from https://r-charts.com/ggplot2/axis/#scales
 marks_no_sci <- function(x) format(x, big.mark = ",", decimal.mark = ".", scientific = FALSE)  
   
-scatterplot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = nbins))  +
+scatterplot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = nsamples))  +
   geom_point()+
   facet_wrap(.~ geographic_region, ncol =3)+
   theme_bw()+
   scale_x_log10(labels = marks_no_sci)+
   scale_y_log10()+
   ylab('Number of publicly available BINs shared with our dataset')+
-  xlab('Number of publicly available BINs')
+  xlab('Number of publicly available sequences')
 scatterplot  
 
 ggsave(plot = scatterplot,
        filename = here('figures', 'fig_5_npublic_and_shared_bins.png'))
 
+
+
 distance_plot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = distance_km
                                     ))+
   geom_point()+ 
+  geom_smooth(method = 'lm')+
   theme_bw()+
-  scale_x_log10(limits = c(1, NA))+
-  scale_y_log10()+
+#  scale_x_log10(limits = c(1, NA))+
+#  scale_y_log10()+
   #scale_colour_viridis_d()+
   ylab('Number of publicly available BINs shared with our dataset')+
   xlab('Distance from Ghana (km)')+
-  labs(colour = 'Geographic area')+
-  facet_wrap(.~ geographic_region, ncol =3)
+  labs(colour = 'Geographic area')#+
+  #facet_wrap(.~ geographic_region, ncol =3)
 
 distance_plot
 ggsave(plot = distance_plot,
