@@ -201,7 +201,8 @@ nmds_inputs <- list()
 nmds_outputs <- list()
 nmds_trap_plots <- list()
 nmds_habitat_plots <- list()
-for(current_taxa in c('order', 'family', 'genus', 'bin')){
+taxonomic_levels <- c('order', 'family', 'genus', 'bin')
+for(current_taxa in taxonomic_levels){
   print(current_taxa)
   nmds_inputs[[current_taxa]] <- nmds_input_generator(current_taxa, 
                                                       min_taxa_threshold = nmds_inclusion_threshold,
@@ -300,38 +301,17 @@ order_centroid <- nmds_outputs[['order']]$scores %>%
   summarize(NMDS1=mean(NMDS1), NMDS2=mean(NMDS2))
 
 
+tests_list <- list()
+for(taxa in taxonomic_levels){
+  tests_list[[taxa]] <- adonis2(nmds_outputs[[taxa]]$dist_mat~ nmds_outputs[[taxa]]$scores$trap_type + nmds_outputs[[taxa]]$scores$habitat_type, 
+                                permutations = 1e3, by = 'terms')
+  
+  tests_list[[taxa]] %>%
+    broom::tidy() %>%
+    write_csv(here('results', 'adonis', paste0(taxa, '_summary.csv')))
+}
 
-
-order_test <- adonis2(nmds_outputs[['order']]$dist_mat~ nmds_outputs[['order']]$scores$trap_type + nmds_outputs[['order']]$scores$habitat_type, 
-                      permutations = 1e3, by = 'terms')
-
-order_test
-
-order_test %>%
-  broom::tidy()
-
-order_test %>%
-  broom::tidy() %>%
-  write_csv(here('results', 'adonis', 'order_summary.csv'))
-
-
-## family-level analyses
-
-family_test <- adonis2(nmds_outputs[['family']]$dist_mat~nmds_outputs[['family']]$scores$trap_type + nmds_outputs[['family']]$scores$habitat_type, 
-                       permutations = 1e3, by = 'terms')
-
-family_test
-
-family_test %>%
-  broom::tidy()
-
-family_test %>%
-  broom::tidy() %>%
-  write_csv(here('results', 'adonis', 'family_summary.csv'))
-
-# the strata option in adonis could be used to try and control for trap location
-p_value <- order_test$aov.tab$`Pr(>F)`[1]
-order_test$aov.tab
+tests_list[['genus']]
 
 # test for betadispersion
 library(broom)

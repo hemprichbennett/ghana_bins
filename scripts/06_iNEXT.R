@@ -1,5 +1,3 @@
-# this script, for the first time in the workflow, incorporates data from 
-# earthcape as well as from BOLD.
 
 library(tidyverse)
 library(iNEXT)
@@ -204,3 +202,15 @@ alltaxa_gginext
 ggsave(alltaxa_gginext, file = here('figures', 'inext_plots', 'alltaxa_plot.png'),
        height = 8, width = 15, dpi = 600)
 
+
+# Calculate the OVERALL estimated sampling completeness, -------------------
+# independent of trap type or taxonomy
+
+overall_n_individuals <- alltaxa_trap_abundances %>%
+  pull(nsamples) %>%
+  sum()
+overall_bin_abundances <- alltaxa_trap_abundances %>%
+  pull(nsamples) %>%
+  sort(decreasing = T)
+
+overall_inext <- iNEXT(c(overall_n_individuals, overall_bin_abundances), q=0, datatype="incidence_freq")
