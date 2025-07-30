@@ -17,6 +17,7 @@ big_in_tib <- read_csv(,
          Genus = genus,
          Species = species)
 
+
 malaise_trap_metadata <- read_csv(file = here('data', 'processed_data',
                                               'malaise_trap_metadata.csv'))
 
@@ -109,13 +110,13 @@ write_csv(night_time_families,
 
 # compare with a dataset downloaded from DEFRA, 2025-07-09
 # https://planthealthportal.defra.gov.uk/pests-and-diseases/uk-plant-health-risk-register/downloadEntireRiskRegister.cfm
-defra_pests <- read_csv(here('data', 'raw_data', 'Risk Register 09_July_2025 16_43_13.csv')) %>%
+defra_pests <- read_csv(here('data', 'raw_data', 'pest_taxa', 'Risk Register 09_July_2025 16_43_13.csv')) %>%
   janitor::clean_names() %>%
   rename(common_name = common_name_or_abbreviation,
          binomial_name = pest_name)
 
 # add data from https://cipotato.org/riskatlasforafrica/
-potato_pests <- read_csv(here('data', 'raw_data', 'cipotato_pests.csv')) %>%
+potato_pests <- read_csv(here('data', 'raw_data', 'pest_taxa', 'misc_pests.csv')) %>%
   janitor::clean_names() %>%
   rename(major_hosts = group)
 
@@ -131,6 +132,9 @@ write_csv(pest_detections,
           file = here('results', 'taxonomic_summaries', 'pest_detections.csv'))
 
 
+
+
+
 # make a tibble of only pest detections
 pest_occurrence_tib <- big_in_tib %>%
   filter(Species %in% pest_sp$binomial_name)
@@ -139,3 +143,37 @@ t_leucotreta_detections <- big_in_tib %>%
   filter(Species == 'Thaumatotibia leucotreta') %>%
   group_by(date, lot) %>%
   count()
+
+
+
+
+# possible_pest taxa ------------------------------------------------------
+
+
+possible_pest_families <- c('Cecidomyiidae', 'Chloropidae', 'Sarcophagidae', 
+                            'Sphaeroceridae', 'Aphididae',
+  'Simuliidae', 'Ceratopogonidae', 'Tabanidae', 'Rhagionidae', 'Muscidae', 'Culicidae')
+
+possible_pest_genera <- big_in_tib %>%
+  filter(Family %in% possible_pest_families) %>%
+  group_by(Order, Family, Genus, type) %>%
+  summarise(n_samples = n()) %>%
+  pivot_wider(names_from = type, values_from = n_samples, 
+              values_fill = list(n_samples = 0)) %>%
+  arrange(Order, Family) %>%
+  select(Order, Family, Genus, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
+
+write_csv(possible_pest_genera, 
+          file = here('results', 'taxonomic_summaries', 'possible_pest_species.csv'))
+
+possible_pest_species <- big_in_tib %>%
+  filter(Family %in% possible_pest_families) %>%
+  group_by(Order, Family, Species, type) %>%
+  summarise(n_samples = n()) %>%
+  pivot_wider(names_from = type, values_from = n_samples, 
+              values_fill = list(n_samples = 0)) %>%
+  arrange(Order, Family) %>%
+  select(Order, Family, Species, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
+
+write_csv(possible_pest_species, 
+          file = here('results', 'taxonomic_summaries', 'possible_pest_species.csv'))
