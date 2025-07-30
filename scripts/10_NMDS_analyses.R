@@ -338,6 +338,37 @@ anova(family_bd) %>%
 
 # family level
 
+malaise_inputs <- list()
+malaise_nmds_list <- list()
+malaise_adonis_outputs <- list()
+for(taxa in  taxonomic_levels){
+  print(taxa)
+  
+  # filter just for the desired values
+  malaise_inputs[[taxa]] <- nmds_inputs[[taxa]]
+  
+  malaise_inputs[[taxa]]$trap_types <- malaise_inputs[[taxa]]$trap_types %>% 
+    filter(trap_type == 'Malaise') %>%
+    # add the temporal metadata
+    left_join(malaise_trap_metadata, by = c('sampling_event' = 'lot')) %>%
+    select(sampling_event, trap_type, habitat_type, coarse_timing) %>%
+    filter(!is.na(coarse_timing))
+  
+  # filter the matrix so that it only contains rows present in the trap_types
+  # tibble
+  malaise_inputs[[taxa]]$trap_matrix <- malaise_inputs[[taxa]]$trap_matrix[rownames(malaise_inputs[[taxa]]$trap_matrix) %in% malaise_inputs[[taxa]]$trap_types$sampling_event,]
+  
+  malaise_nmds_list[[taxa]] <- nmds_analysis(malaise_inputs[[taxa]], 
+                                       min_tries = 20,
+                                       max_tries = 100,
+                                       malaise_analysis = T)
+ 
+  malaise_adonis_outputs[[taxa]] <- adonis2(malaise_nmds_list[[taxa]]$dist_mat~malaise_nmds_list[[taxa]]$scores$coarse_timing + malaise_nmds_list[[taxa]]$scores$habitat_type, 
+                                            permutations = 1e3, by = 'terms') %>%
+    broom::tidy()
+   
+}
+
 # filter just for the desired values
 family_malaise_input <- nmds_inputs[['family']]
 
