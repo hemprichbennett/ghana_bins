@@ -164,4 +164,12 @@ abundant_bin_summary <- main_df %>%
   group_by(BIN, available, order, family, species) %>%
   summarise(n = n()) %>%
   arrange(desc(n)) %>%
-  head(retention_threshold) 
+  head(retention_threshold) %>%
+  mutate(bold_url = paste0('https://portal.boldsystems.org/bin/',BIN))
+
+write_csv(abundant_bin_summary, 'results/abundant_bins.csv')
+
+abundant_bin_summary %>%
+  group_by(order) %>%
+  summarise(nbins = n()) %>%
+  arrange(desc(nbins))
