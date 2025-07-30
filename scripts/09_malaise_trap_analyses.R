@@ -74,6 +74,12 @@ lot_bottle_counts <- all_arthropod_data %>%
   summarise(n_sublots = length(unique(lot)))
 
 
+#the number of fully-sequenced bottles
+lot_bottle_counts %>% filter(n_sublots >=4) %>% nrow()
+
+# the number of malaise lots
+nrow(lot_bottle_counts)
+
 # plot the number of sublots per lot
 ggplot(lot_bottle_counts, aes(x = n_sublots)) + 
   geom_histogram() +
