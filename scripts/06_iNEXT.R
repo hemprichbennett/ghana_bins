@@ -206,11 +206,68 @@ ggsave(alltaxa_gginext, file = here('figures', 'inext_plots', 'alltaxa_plot.png'
 # Calculate the OVERALL estimated sampling completeness, -------------------
 # independent of trap type or taxonomy
 
-overall_n_individuals <- alltaxa_trap_abundances %>%
-  pull(nsamples) %>%
-  sum()
-overall_bin_abundances <- alltaxa_trap_abundances %>%
+overall_n_individuals <- nrow(too_many_cols)
+
+overall_bin_abundances <- too_many_cols %>%
+  filter(!is.na(bin)) %>%
+  group_by(bin) %>%
+  summarise(nsamples = n()) %>%
   pull(nsamples) %>%
   sort(decreasing = T)
 
+
+
 overall_inext <- iNEXT(c(overall_n_individuals, overall_bin_abundances), q=0, datatype="incidence_freq")
+overall_rds_path <- here('data', 'processed_data', 'big_overall_inext_object.RDS')
+# save the object, so it can be reloaded again without needing several hours
+# to regenerate
+saveRDS(object = overall_inext, 
+        file = overall_rds_path)
+overall_inext <- readRDS(file = overall_rds_path)
+
+overall_inext
+
+# calculate percentage completeness
+overall_inext$AsyEst %>% 
+  as_tibble(rownames = 'Index') %>%
+  filter(Index == 'Species Richness') %>% 
+  mutate(percent_completeness = Observed / Estimator * 100) %>%
+  pull(percent_completeness)
+
+
+
+# Calculate overall percent completeness for each order -------------------
+
+results_list <- list()
+for(taxa in desired_orders){
+  
+  taxa_n_individuals <- too_many_cols %>%
+    filter(order == taxa) %>%
+    nrow(.)
+  
+  taxa_bin_abundances <- too_many_cols %>%
+    filter(order == taxa) %>%
+    group_by(bin) %>%
+    summarise(nsamples = n()) %>%
+    pull(nsamples) %>%
+    sort(decreasing = T)
+  
+  
+  
+  taxa_inext <- iNEXT(c(taxa_n_individuals, taxa_bin_abundances), q=0, datatype="incidence_freq")
+  completeness_est <- taxa_inext$AsyEst %>% 
+    as_tibble(rownames = 'Index') %>%
+    filter(Index == 'Species Richness') %>% 
+    mutate(percent_completeness = Observed / Estimator * 100) %>%
+    pull(percent_completeness)
+  results_list[[taxa]] <- tibble(taxa = taxa, 
+                                 estimated_completeness_percentage = completeness_est)
+}
+
+taxa_overall_completeness <- bind_rows(results_list)
+
+write_csv(taxa_overall_completeness, file = here('results', 'taxa_completeness.csv'))
+
+taxa_overall_completeness %>% summarise(m = mean(estimated_completeness_percentage))
+
+taxa_overall_completeness %>% arrange(estimated_completeness_percentage)
