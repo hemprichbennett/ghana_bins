@@ -45,7 +45,7 @@ bind_rows(duplicate_bin_list) %>% group_by(actually_unique) %>% summarise(n = n(
 
 # Read in and check previous csvs -----------------------------------------
 
-our_big_df <- read_csv('data/processed_data/our_organised_bold_data.csv')
+our_big_df <- read_csv('data/processed_data/bold_and_earthcape_combined.csv')
 bold_public_info_df <- read_csv('data/processed_data/bold_public_bin_matches.csv')
 
 common_names <- read_csv('data/order_common_names.csv')
@@ -126,15 +126,16 @@ main_df %>%
 
 
 # now for number of BINs
-main_df %>%
+overall_uniqueness <- main_df %>%
   select(order, available, english_common_name, BIN) %>%
   distinct() %>%
   group_by(order, available, english_common_name) %>%
   summarise(n = n()) %>%
   pivot_wider(names_from = available, values_from = n, 
               values_fill = 0,
-              names_sort = T) %>%
-  write_csv('results/unique_data/overall_bin_uniqueness.csv')
+              names_sort = T)
+
+write_csv(overall_uniqueness, 'results/unique_data/overall_bin_uniqueness.csv')
 
 main_df %>%
   select(order, available, english_common_name, BIN, exact_site) %>%
@@ -173,3 +174,28 @@ abundant_bin_summary %>%
   group_by(order) %>%
   summarise(nbins = n()) %>%
   arrange(desc(nbins))
+
+# quick summary values for the manuscript text
+main_df %>% group_by(type, available) %>% summarise(n = length(unique(BIN)))
+
+abundant_bin_summary %>% arrange(species) %>% pull(species) %>% unique()
+
+# the numbers of those 200 in the different availability categories
+abundant_bin_summary %>% group_by(available) %>% summarise(ntaxa = n())
+
+# total number publicly available
+number_publicly_available <- main_df %>% filter(available == 'Already publicly available') %>%
+  pull(BIN) %>% unique() %>% length()
+
+total_n_bins <- main_df %>% pull(BIN) %>% unique() %>% length()
+
+# percent available
+number_publicly_available / total_n_bins * 100
+
+
+# number privately held
+number_privately_held <- main_df %>% filter(available == 'Already sequenced, no public sequences') %>%
+  pull(BIN) %>% unique() %>% length()
+
+# percent hidden
+number_privately_held / total_n_bins * 100
