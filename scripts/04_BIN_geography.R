@@ -127,8 +127,18 @@ geographic_region_bin_summary <- region_percentage_BINs_present %>%
   pivot_wider(names_from = geographic_region, 
               values_from = local_n_bins,
               values_fill = 0)
-write_csv(geographic_region_bin_summary, 'results/public_data/orders_by_region.csv')
 
+
+
+# add information on the number of BINs per-taxa that are not publicly available
+# or haven't been sequenced, from the previous script
+overall_uniqueness <- read_csv('results/unique_data/overall_bin_uniqueness.csv') %>%
+  select(-english_common_name, -`Already publicly available`)
+
+geographic_region_bin_summary <- geographic_region_bin_summary %>%
+  left_join(overall_uniqueness, by = c('order_name' = 'order'))
+
+write_csv(geographic_region_bin_summary, 'results/public_data/orders_by_region.csv')
 
 # Now for countries within Africa and the Middle East
 
