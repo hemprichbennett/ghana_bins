@@ -195,6 +195,41 @@ nmds_plot <- function(input_list, title_str = NA, viridis_option = "D",
   return(out_plot)
 }
 
+# A quick plot of the orders found in each trap type ----------------------
+
+trap_sample_counts <- too_many_cols %>%
+  group_by(trap_type) %>%
+  # the number of samples in a given trap type, independent of taxonomy
+  summarise(trap_total_nsamples = n())
+
+taxa_sample_counts <- too_many_cols %>%
+  select(order, trap_type) %>%
+  group_by(order, trap_type) %>%
+  summarise(n_samples_per_taxa = n())
+
+trap_taxonomy_for_plotting <- taxa_sample_counts %>%
+  left_join(trap_sample_counts) %>%
+  mutate(percent_of_trap_abundance = n_samples_per_taxa / trap_total_nsamples * 100) %>%
+  filter(!is.na(trap_type),
+         !is.na(order))
+
+ggplot(trap_taxonomy_for_plotting, 
+       aes(y = fct_rev(order), x = trap_type, fill = percent_of_trap_abundance))+
+  theme_bw()+
+  geom_tile(colour = 'white')+
+  scale_fill_gradient2(low = "white", mid = "blue",
+                       high = "black", midpoint = 0.5, 
+                       name ='Percent of\nsamples containing')
+
+# make a table of the same values
+trap_taxonomy_table <- trap_taxonomy_for_plotting %>%
+  select(order, trap_type, percent_of_trap_abundance) %>%
+  mutate(percent_of_trap_abundance = round(percent_of_trap_abundance,
+                                           digits = 2)) %>%
+  pivot_wider(names_from = trap_type, values_from = percent_of_trap_abundance)
+
+write_csv(trap_taxonomy_table, file = here('results', 'manuscript_tables',
+                                           'trap_taxonomy_percentage.csv'))
 
 # NMDS analyses ---------------------------------------------------------------
 nmds_inputs <- list()
@@ -222,7 +257,8 @@ for(current_taxa in taxonomic_levels){
   nmds_habitat_plots[[current_taxa]] <- nmds_plot(input_list = nmds_outputs[[current_taxa]],
                                                title_str = paste0(str_to_title(current_taxa), '-level NMDS'),
                                                viridis_option = 'B',
-                                               plot_by = 'habitat_type')
+                                               plot_by = 'habitat_type')+
+    theme(text=element_text(size=10))
   
   ggsave(here('figures', 'nmds', paste0(current_taxa, '_habitat_nmds.png')), nmds_habitat_plots[[current_taxa]], height = 12, width = 10)
   
@@ -288,6 +324,14 @@ big_nmds_plot <- ggplot(data=nmds_scores,
 
 ggsave(here('figures', 'nmds', 'fig_x_big_nmds_plot.png'), big_nmds_plot)
 
+# save the habitat NMDS plot as a basic gridextra format one
+multipanel_nmds <- grid.arrange(nmds_habitat_plots$order, 
+             nmds_habitat_plots$family,
+             nmds_habitat_plots$genus,
+             nmds_habitat_plots$bin,
+             ncol = 2)
+ggsave(multipanel_nmds, filename = here('figures', 'fig_si_nmds.png'),
+       width = 10, height = 7)
 # Analyses ----------------------------------------------------------------
 
 
@@ -363,38 +407,82 @@ for(taxa in  taxonomic_levels){
                                        max_tries = 100,
                                        malaise_analysis = T)
  
+  
+  # write the taxonomic ranking to the time_centroid, for use later
+  malaise_nmds_list[[taxa]]$time_centroid$taxa_grouping <- taxa
+  
+  # run the analysis
   malaise_adonis_outputs[[taxa]] <- adonis2(malaise_nmds_list[[taxa]]$dist_mat~malaise_nmds_list[[taxa]]$scores$coarse_timing + malaise_nmds_list[[taxa]]$scores$habitat_type, 
-                                            permutations = 1e3, by = 'terms') %>%
-    broom::tidy()
+                                            permutations = 1e3, by = 'terms')
    
 }
 
 
 
-family_malaise_plot <- nmds_plot(input_list = malaise_nmds_list[['family']],
-          title_str = 'Family-level NMDS',
-          viridis_option = 'D',
-          plot_by = 'coarse_timing',
-          all_text_size = 10)+
-  labs(tag = 'B')
+
+# Big MALAISE plot --------------------------------------------------------
+
+
+malaise_nmds_scores <- bind_rows(malaise_nmds_list[['order']]$scores, 
+                         malaise_nmds_list[['family']]$scores,
+                         malaise_nmds_list[['genus']]$scores,
+                         malaise_nmds_list[['bin']]$scores
+) %>%
+  # capitalise the taxonomic ranks for plotting
+  mutate(taxa_grouping = str_to_title(taxa_grouping),
+         # convert from 'Bin' to 'BIN'
+         taxa_grouping = gsub('Bin', 'BIN', taxa_grouping),
+         # turn it into a factor, so we can specify a non-alphabetical plotting
+         # order
+         taxa_grouping = as.factor(taxa_grouping),
+         # specify the factor order
+         taxa_grouping = fct_relevel(taxa_grouping, c('Order', 'Family', 
+                                                      'Genus', 'BIN')))
+
+
+malaise_nmds_centroids <- bind_rows(malaise_nmds_list[['order']]$time_centroid, 
+                            malaise_nmds_list[['family']]$time_centroid,
+                            malaise_nmds_list[['genus']]$time_centroid,
+                            malaise_nmds_list[['bin']]$time_centroid) %>%
+  # capitalise the taxonomic ranks for plotting
+  mutate(taxa_grouping = str_to_title(taxa_grouping),
+         # convert from 'Bin' to 'BIN'
+         taxa_grouping = gsub('Bin', 'BIN', taxa_grouping),
+         # turn it into a factor, so we can specify a non-alphabetical plotting
+         # order
+         taxa_grouping = as.factor(taxa_grouping),
+         # specify the factor order
+         taxa_grouping = fct_relevel(taxa_grouping, c('Order', 'Family', 
+                                                      'Genus', 'BIN')))
+
+# plot containing all but the centroids
+big_malaise_nmds_plot <- ggplot(data=malaise_nmds_scores,
+                        aes(
+                          x=NMDS1,
+                          y=NMDS2,
+                          group=coarse_timing,
+                          shape=coarse_timing)) + 
+  geom_point(data=malaise_nmds_centroids, size=5,# color="black",
+             aes(colour=coarse_timing, fill = coarse_timing, shape=coarse_timing), show.legend=FALSE)+
+  stat_ellipse(show.legend=FALSE) +
+  geom_point(aes(colour=coarse_timing)) + # add the point markers
+  # specify colours manually, as the viridis options default to a dark tone for
+  # day, light for night
+  scale_colour_manual(values = c('Day' ='#FDE725FF', 'Night' = '#440154FF'))+
+  scale_fill_manual(values = c('Day' = '#FDE725FF', 'Night' = '#440154FF'))+
+  facet_wrap(.~ taxa_grouping, scales = 'free')+
+  theme_bw()+
+  theme(legend.position = 'bottom',
+        text=element_text(size=10))+
+  labs(colour = 'Trap deployment time', shape = 'Trap deployment time')+
+  # increase point size in legend
+  guides(colour = guide_legend(override.aes = list(size=10)))
+
+big_malaise_nmds_plot
+ggsave(here('figures', 'nmds', 'si_fig_x_malaise_nmds_plot.png'), big_malaise_nmds_plot)
 
 
 
-order_malaise_plot <- nmds_plot(input_list = malaise_nmds_list[['order']],
-          title_str = 'Order-level NMDS',
-          viridis_option = 'D',
-          plot_by = 'coarse_timing',
-          all_text_size = 10)+
-  labs(tag = 'A')
-
-# Save malaise plots ------------------------------------------------------
-
-
-
-multipanel_nmds <- grid.arrange(order_malaise_plot, family_malaise_plot, ncol = 2)
-multipanel_nmds
-ggsave(multipanel_nmds, filename = here('figures', 'si_x_mutlipanel_nmds.png'),
-       width = 7)
 
 # Basic night-day taxonomic summaries -------------------------------------
 
