@@ -61,7 +61,20 @@ family_trap_counts <- big_in_tib %>%
   select(Order, Family, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
 write_csv(family_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'family_trap_counts.csv'))  
+          file = here('results', 'taxonomic_summaries', 'family_trap_counts.csv')) 
+
+
+order_trap_counts <- big_in_tib %>%
+  filter(!is.na(Order), !is.na(type)) %>%
+  group_by(Order, type) %>%
+  summarise(n_samples = n()) %>%
+  pivot_wider(names_from = type, values_from = n_samples, 
+              values_fill = list(n_samples = 0)) %>%
+  arrange(Order) %>%
+  select(Order, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
+
+write_csv(order_trap_counts, 
+          file = here('results', 'taxonomic_summaries', 'order_trap_counts.csv')) 
 
 # Make malaise trap temporal abundance table -----------------------------------
 
@@ -115,7 +128,7 @@ defra_pests <- read_csv(here('data', 'raw_data', 'pest_taxa', 'Risk Register 09_
   rename(common_name = common_name_or_abbreviation,
          binomial_name = pest_name)
 
-# add data from https://cipotato.org/riskatlasforafrica/
+# add data from https://cipotato.org/riskatlasforafrica/ and a few other sources
 potato_pests <- read_csv(here('data', 'raw_data', 'pest_taxa', 'misc_pests.csv')) %>%
   janitor::clean_names() %>%
   rename(major_hosts = group)
@@ -144,15 +157,19 @@ t_leucotreta_detections <- big_in_tib %>%
   group_by(date, lot) %>%
   count()
 
+pest_occurrence_tib
 
+percent_samples_crop_pests <- nrow(pest_occurrence_tib) / nrow(big_in_tib) * 100
 
+percent_bins_crop_pests <- length(unique(pest_occurrence_tib$bin)) / 
+  length(unique(big_in_tib$bin)) * 100
 
 # possible_pest taxa ------------------------------------------------------
 
 
-possible_pest_families <- c('Cecidomyiidae', 'Chloropidae', 'Sarcophagidae', 
+possible_pest_families <- c('Cecidomyiidae', 
                             'Sphaeroceridae', 'Aphididae',
-  'Simuliidae', 'Ceratopogonidae', 'Tabanidae', 'Rhagionidae', 'Muscidae', 'Culicidae')
+  'Simuliidae', 'Ceratopogonidae', 'Tabanidae', 'Rhagionidae', 'Culicidae')
 
 possible_pest_genera <- big_in_tib %>%
   filter(Family %in% possible_pest_families) %>%
@@ -177,3 +194,66 @@ possible_pest_species <- big_in_tib %>%
 
 write_csv(possible_pest_species, 
           file = here('results', 'taxonomic_summaries', 'possible_pest_species.csv'))
+
+
+
+possible_bloodfeeding_families <- c('Ceratopogonidae',
+                                    'Culicidae', 
+                                    'Rhagionidae',
+                                    'Simuliidae', 
+                                     'Tabanidae'
+                                    )
+
+possible_bloodfeeders <- big_in_tib %>%
+  filter(Family %in% possible_bloodfeeding_families) %>%
+  group_by(Order, Family) %>%
+  summarise(n_samples = n(),
+            nbins = length(unique(bin))) 
+
+write_csv(possible_bloodfeeders, 
+          file = here('results', 'taxonomic_summaries', 
+                      'possible_bloodfeeders.csv'))
+
+percent_poss_bloodfeeders_bins <- sum(possible_bloodfeeders$nbins / 
+                                   length(unique(big_in_tib$bin)) * 100)
+
+percent_poss_bloodfeeders_abundance <- sum(possible_bloodfeeders$n_samples /
+                                        nrow(big_in_tib) * 100)
+
+
+poss_bloodfeeder_table <- big_in_tib %>%
+  filter(Family %in% possible_bloodfeeding_families) %>%
+  group_by(Order, Family, type) %>%
+  summarise(n_samples = n()) %>%
+  pivot_wider(names_from = type, values_from = n_samples, 
+              values_fill = list(n_samples = 0)) %>%
+  arrange(Order, Family) %>%
+  select(Order, Family, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
+
+prob_bloodfeeding_families <- c('Culicidae', 'Simuliidae', 'Tabanidae')
+
+prob_bloodfeeders <- possible_bloodfeeders %>% 
+  filter(Family %in% prob_bloodfeeding_families)
+
+percent_prob_bloodfeeders_bins <- sum(prob_bloodfeeders$nbins / 
+                                        length(unique(big_in_tib$bin)) * 100)
+
+percent_prob_bloodfeeders_abundance <- sum(prob_bloodfeeders$n_samples /
+                                             nrow(big_in_tib) * 100)
+
+
+
+# How many samples were assigned binomials --------------------------------
+
+species_status <- big_in_tib %>%
+  mutate(has_binomial = !is.na(Species)) %>%
+  select(bin, has_binomial)
+
+n_bins_with_sp <- species_status %>%
+  filter(has_binomial == T) %>%
+  pull(bin) %>%
+  unique() %>%
+  length()
+
+
+percent_samples_with_sp <- nrow(filter(species_status, has_binomial == T)) / nrow(big_in_tib) * 100
