@@ -129,6 +129,17 @@ trap_insect_numbers <- malaise_trap_data_to_use %>%
 
 # Models ------------------------------------------------------------------
 
+trap_insect_numbers %>%
+  filter(variable_type == 'Number of insects captured') %>%
+  group_by(coarse_timing) %>%
+  summarise(avg_abundance = mean(variable_result),
+            sd_abundance = sd(variable_result))
+
+trap_insect_numbers %>%
+  filter(variable_type == 'Number of unique BINs') %>%
+  group_by(coarse_timing) %>%
+  summarise(avg_bin_richness = mean(variable_result),
+            sd_bin_richness = sd(variable_result))
 
 ## Abundance model ---------------------------------------------------------
 
@@ -165,6 +176,7 @@ abundance_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number
                             aes(x = coarse_timing, y = variable_result))+
   geom_boxplot()+
   theme_bw()+
+  scale_y_log10()+
   ylab('Number of insects captured')+
   xlab('Bottle deployment time')+
   theme(text = element_text(size = 15))+ 
@@ -210,6 +222,7 @@ bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of un
   theme_bw()+
   ylab('Number of unique BINs')+
   xlab('Bottle deployment time')+
+  scale_y_log10()+
   theme(text = element_text(size = 15))+
   labs(tag = 'B')
 bin_boxplot
