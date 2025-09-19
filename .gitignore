@@ -14,8 +14,3 @@ params.py
 *.pyc
 *.docx
 bold_key.R
-
-*.html
-*.pdf
-*.jpg
-*.jpeg
