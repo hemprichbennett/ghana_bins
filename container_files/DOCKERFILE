@@ -10,6 +10,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   libcurl4-openssl-dev libglpk-dev \
   && rm -rf /var/lib/apt/lists/* \
-  && R -q -e 'install.packages(c("iNEXT", "bold", "janitor", "countrycode", "taxize", "here", "vegan", "broom.mixed", "nlme", "emmeans", "ggsignif", "onewaytests", "geosphere"))'
+  && R -q -e 'install.packages(c("iNEXT","janitor", "countrycode", "taxize", "here", "vegan", "broom.mixed", "nlme", "emmeans", "ggsignif", "onewaytests", "geosphere"))' \
+  && R -q -e 'remotes::install_github("ropensci/bold")'
 
 WORKDIR /home/rstudio
