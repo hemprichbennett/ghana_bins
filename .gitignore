@@ -6,3 +6,11 @@
 data/*
 figures/*
 results/*
+*.html
+*.pdf
+*.jpg
+*.jpeg
+params.py
+*.pyc
+*.docx
+bold_key.R

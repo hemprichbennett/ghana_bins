@@ -2,13 +2,17 @@ library(tidyverse)
 library(bold)
 
 # read in the data from the previous script
-in_df <- read_csv('data/processed_data/tidied_bold_data.csv')
+in_df <- read_csv('data/processed_data/our_organised_bold_data.csv')
 
 # make a vector of the unique BINs
 unique_bins <- in_df %>%
   filter(!is.na(bin)) %>%
   pull(bin) %>%
   unique(.)
+
+
+
+# Query BOLD’s public data ------------------------------------------------
 
 # bold doesn't like being hit with thousands of queries at once, so we have to specify
 # how many bins to query at once
@@ -44,3 +48,14 @@ for(i in 1:iterations){
     bin = unique_bins[lower_bound : upper_bound]
     )
 }
+
+
+# combine into a big dataframe
+bold_df <- do.call(rbind, bold_list)
+
+# filter out any sequences from our own projects
+bold_df <- bold_df %>%
+  # retain lines that do NOT match the pattern 'begins with' GCEP/TMGHA/TMGHB
+  filter(!grepl('^GCEP|^TMGHA|^TMGHB', processid))
+
+write_csv(bold_df, 'data/processed_data/bold_public_bin_matches.csv')

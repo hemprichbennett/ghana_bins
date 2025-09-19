@@ -1,0 +1,16 @@
+FROM rocker/verse:latest
+
+RUN /rocker_scripts/install_quarto.sh
+
+ RUN tlmgr update --all --self \
+  && tlmgr install pdfcol unicode-math booktabs caption float tcolorbox pgf environ soul gdal terra \
+  && tlmgr path add || true
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+  libcurl4-openssl-dev libglpk-dev \
+  && rm -rf /var/lib/apt/lists/* \
+  && R -q -e 'install.packages(c("iNEXT","janitor", "countrycode", "taxize", "here", "vegan", "broom.mixed", "nlme", "emmeans", "ggsignif", "onewaytests", "geosphere"))' \
+  && R -q -e 'remotes::install_github("ropensci/bold")'
+
+WORKDIR /home/rstudio
