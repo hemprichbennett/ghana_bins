@@ -7,7 +7,7 @@ library(here)
 
 # MANUALLY CODED VARIABLES: check before submission as these will go out of date
 total_n_sequences <- 16500000
-total_n_bins <- 1272000
+total_n_bins <- 1326000
 
 our_data <- read_csv(file = here('data', 'processed_data', 
                                  'bold_and_earthcape_combined.csv'))
