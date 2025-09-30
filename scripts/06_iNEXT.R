@@ -111,11 +111,11 @@ type1_plot <- ggplot(type1_df, aes(x=x, y=y, colour=Assemblage)) +
         text=element_text(size=10))
 type1_plot
 
-ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.png'),
+ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
        type1_plot,
        dpi = 600)
 
-ggsave(filename = here('figures', 'fig_1_type1_inext_plot.png'),
+ggsave(filename = here('figures', 'fig_1_type1_inext_plot.pdf'),
        type1_plot,
        dpi = 600,
        width = 11.5)

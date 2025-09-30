@@ -322,7 +322,8 @@ big_nmds_plot <- ggplot(data=nmds_scores,
   # increase point size in legend
   guides(colour = guide_legend(override.aes = list(size=10)))
 
-ggsave(here('figures', 'nmds', 'fig_x_big_nmds_plot.png'), big_nmds_plot)
+ggsave(here('figures', 'nmds', 'fig_x_big_nmds_plot.pdf'), big_nmds_plot,
+       dpi = 600)
 
 # save the habitat NMDS plot as a basic gridextra format one
 multipanel_nmds <- grid.arrange(nmds_habitat_plots$order, 

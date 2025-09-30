@@ -115,7 +115,8 @@ top20_plot <- ggplot(top_20_nshared_tib, aes(x = n_shared_bins, y = fct_rev(coun
 
 top20_plot
 ggsave(plot = top20_plot,
-       filename = here('figures', 'fig_5_topcountries_plot.png'),
+       filename = here('figures', 'fig_5_topcountries_plot.pdf'),
+       dpi = 600,
        width = 8)
 
 top_20_nshared_tib %>%
@@ -178,7 +179,8 @@ scatterplot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = nsampl
 scatterplot  
 
 ggsave(plot = scatterplot,
-       filename = here('figures', 'fig_5_npublic_and_shared_bins.png'))
+       filename = here('figures', 'fig_4_npublic_and_shared_bins.pdf'),
+       dpi = 600)
 
 
 
@@ -197,7 +199,8 @@ distance_plot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = dist
 
 distance_plot
 ggsave(plot = distance_plot,
-       filename = here('figures', 'fig_4_dist_and_shared_bins.png'))
+       filename = here('figures', 'fig_5_dist_and_shared_bins.pdf'),
+       dpi = 600)
 
 # Analyse trap-composition of BINs with no public matches -----------------
 

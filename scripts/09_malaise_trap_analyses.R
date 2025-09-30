@@ -234,7 +234,8 @@ ggsave(filename = here('figures', 'fig_7_bin_boxplot.png'),
 
 multipanel_boxplot <- grid.arrange(abundance_boxplot, bin_boxplot, ncol = 2)
 multipanel_boxplot
-ggsave(multipanel_boxplot, filename = here('figures', 'fig_x_mutlipanel_boxplot.png'),
+ggsave(multipanel_boxplot, filename = here('figures', 'fig_x_mutlipanel_boxplot.pdf'),
+       dpi = 600,
        width = 7)
 
 
