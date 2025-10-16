@@ -65,32 +65,6 @@ combined_tib <- public_matches %>%
   select(bin, country, geographic_region, 
          ends_with('_trap'))
 
-# make a tibble of the number of BINs per geographic region that were found 
-# by a given trapping method
-region_bin_traps <- combined_tib %>%
-  pivot_longer(cols = ends_with('_trap'),
-               names_to = 'trap_type', values_to = 'n_matches') %>%
-  filter(n_matches > 0) %>%
-  group_by(geographic_region, trap_type) %>%
-  summarise(n_bins_found = n()) %>%
-  # make trap_type a nicer string to use in the plot legend
-  mutate(trap_type = gsub('_', ' ', trap_type),
-         trap_type = str_to_sentence(trap_type),
-         trap_type = gsub('Cdc', 'CDC', trap_type))
-
-# make a barplot of it
-ggplot(region_bin_traps, aes(fill = trap_type, x = geographic_region,
-                             y = n_bins_found))+
-  geom_bar(position='dodge', stat='identity')+
-  scale_fill_viridis_d()+
-  theme_bw()+
-  theme(legend.position = 'bottom')+
-  guides(fill = guide_legend(title = 'Trap type:'))+
-  labs(x = 'Geographic region', 
-       y = 'Number of publicly available BINS matching ones in our dataset')
-
-
-
 # Make a plot of the top 20 countries -------------------------------------
 
 # calculate the number of shared BINs
@@ -103,21 +77,6 @@ country_nshared_tib <- combined_tib %>%
 top_20_nshared_tib <- country_nshared_tib %>%
   slice_max(n_shared_bins, n = 20) %>%
   mutate(country = fct(country))
-
-top20_plot <- ggplot(top_20_nshared_tib, aes(x = n_shared_bins, y = fct_rev(country), fill = geographic_region)) +
-  geom_bar(stat = 'identity')+
-  theme_bw()+
-  scale_fill_viridis_d()+
-  xlab('Number of publicly available BINs shared with our dataset')+
-  ylab('Country')+
-  theme(legend.position = 'bottom')+ 
-  labs(fill = 'Geographic area')
-
-top20_plot
-ggsave(plot = top20_plot,
-       filename = here('figures', 'fig_5_topcountries_plot.pdf'),
-       dpi = 600,
-       width = 8)
 
 top_20_nshared_tib %>%
   mutate(Rank = seq(1,20)) %>%
@@ -189,13 +148,9 @@ distance_plot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = dist
   geom_point()+ 
   geom_smooth(method = 'lm')+
   theme_bw()+
-#  scale_x_log10(limits = c(1, NA))+
-#  scale_y_log10()+
-  #scale_colour_viridis_d()+
   ylab('Number of publicly available BINs shared with our dataset')+
   xlab('Distance from Ghana (km)')+
-  labs(colour = 'Geographic area')#+
-  #facet_wrap(.~ geographic_region, ncol =3)
+  labs(colour = 'Geographic area')
 
 distance_plot
 ggsave(plot = distance_plot,
@@ -276,10 +231,6 @@ ggsave(filename = here('figures', 'trap_bin_availability.jpeg'),
 
 trap_bin_availability_wide <- trap_bin_availability_plot +
   facet_wrap(.~ order, scales = 'free_y', ncol = 7)
-ggsave(filename = here('figures', 'trap_bin_availability_wide.jpeg'),
-       dpi = 600,
-       plot = trap_bin_availability_wide, height = 10, width = 20)
-
-ggsave(filename = here('figures', 'fig_1_trap_bin_availability_wide.jpeg'),
+ggsave(filename = here('figures', 'supplementary_figure_3_trap_bin_availability_wide.jpeg'),
        dpi = 600,
        plot = trap_bin_availability_wide, height = 10, width = 20)
