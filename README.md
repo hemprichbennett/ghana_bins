@@ -1,12 +1,6 @@
 This repository contains code for the preprint and submitted manuscript 'Characterising a species-rich and understudied tropical insect fauna using DNA barcoding' by Hemprich-Bennett et al. (2025).
 
-Some scripts require you to provide a file 'bold_key.R' in the repository's base directory. This file should contain your BOLD API key as follows:
-
-```R
-bold_key <- 'your_bold_api_key_here'
-```
-
-This key can be obtained by registering for a BOLD account at https://www.boldsystems.org and then copying the API Key found in your account settings.
+# Software environment
 
 The repository's analyses took place in Rstudio server in a docker container, pulled from dockerhub using the two scripts in the container_files directory. This image was built using the script in 'container_files/image_build.sh'. However the analyses should work in any R environment with the required packages installed.
 
