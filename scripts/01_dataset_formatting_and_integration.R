@@ -340,33 +340,6 @@ write_csv(too_many_cols,
                       'bold_and_earthcape_combined.csv'))
 
 
-# Malaise trap debugging --------------------------------------------------
-
-malaise_trap_data <- too_many_cols %>% 
-  filter(type == 'Malaise') %>%
-  mutate(overall_lot = gsub('\\..+', '', lot))
-
-malaise_trap_sample_counts <- malaise_trap_data %>% 
-  group_by(overall_lot) %>%
-  summarise(n_arthropods = n())
-
-ggplot(malaise_trap_sample_counts, aes(x = n_arthropods))+
-  geom_histogram()
-
-
-dubious_malaise_trap_lots <- read_csv(here('data', 'raw_data', 
-                                           'malaise_trap_lots_to_query.csv')) %>%
-  pull(lot_id)
-
-trap_1 <- too_many_cols %>% filter(grepl(dubious_malaise_trap_lots[6], lot)) %>%
-  select(lot, date, order, family, genus, species, field_id, transect, type) %>%
-  arrange(lot)
-
-exclusion_pattern <- paste0('^', paste(dubious_malaise_trap_lots, collapse = '\\..+|^'))
-
-bad_lots <- too_many_cols %>%
-  filter(grepl(exclusion_pattern, lot))
-
 # Basic plotting ----------------------------------------------------------
 
 # function happily borrowed from https://stackoverflow.com/a/66583089
