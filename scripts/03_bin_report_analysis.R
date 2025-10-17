@@ -114,7 +114,7 @@ overall_uniqueness <- main_df %>%
               values_fill = 0,
               names_sort = T)
 
-write_csv(overall_uniqueness, 'results/unique_data/overall_bin_uniqueness.csv')
+write_csv(overall_uniqueness, 'data/processed_data/overall_bin_uniqueness.csv')
 
 # summary information for the 200 most common BINs
 retention_threshold <- 200

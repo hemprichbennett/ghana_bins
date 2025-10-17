@@ -76,7 +76,7 @@ geographic_region_bin_summary <- region_percentage_BINs_present %>%
 
 # add information on the number of BINs per-taxa that are not publicly available
 # or haven't been sequenced, from the previous script
-overall_uniqueness <- read_csv('results/unique_data/overall_bin_uniqueness.csv') %>%
+overall_uniqueness <- read_csv('data/processed_data/overall_bin_uniqueness.csv') %>%
   select(-english_common_name, -`Already publicly available`)
 
 geographic_region_bin_summary <- geographic_region_bin_summary %>%
