@@ -37,7 +37,7 @@ species_trap_counts <- big_in_tib %>%
   select(Order, Family, Species, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 # this table doesn't make it into the paper, but values of it are used in-text
 write_csv(species_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'species_trap_counts.csv'))  
+          file = here('results', 'species_trap_counts.csv'))  
 
 
 
@@ -51,7 +51,7 @@ family_trap_counts <- big_in_tib %>%
   select(Order, Family, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
 write_csv(family_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'si_tbl_2_family_trap_counts.csv')) 
+          file = here('results', 'si_tbl_2_family_trap_counts.csv')) 
 
 
 order_trap_counts <- big_in_tib %>%
@@ -64,7 +64,7 @@ order_trap_counts <- big_in_tib %>%
   select(Order, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
 write_csv(order_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'si_tbl_1_order_trap_counts.csv')) 
+          file = here('results', 'si_tbl_1_order_trap_counts.csv')) 
 
 # Make malaise trap temporal abundance table -----------------------------------
 
@@ -92,7 +92,7 @@ malaise_trap_arthropods <- big_in_tib %>%
   select(Order, Family, Day, Night)
   
 write_csv(malaise_trap_arthropods, 
-          file = here('results', 'taxonomic_summaries', 'si_tbl_6_malaise_trap_arthropods.csv'))
+          file = here('results', 'si_tbl_6_malaise_trap_arthropods.csv'))
 
 
 # Pest species ------------------------------------------------------------
@@ -118,7 +118,7 @@ pest_detections <- inner_join(species_trap_counts, pest_sp, by = c('Species' = '
 
 # write file
 write_csv(pest_detections, 
-          file = here('results', 'taxonomic_summaries', 'si_tbl_3_pest_detections.csv'))
+          file = here('results', 'si_tbl_3_pest_detections.csv'))
 
 
 
@@ -176,7 +176,7 @@ poss_bloodfeeder_table <- big_in_tib %>%
   select(Order, Family, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
 write_csv(poss_bloodfeeder_table, 
-          file = here('results', 'taxonomic_summaries', 'si_tbl_4_bloodfeeder_detections.csv'))
+          file = here('results', 'si_tbl_4_bloodfeeder_detections.csv'))
 
 prob_bloodfeeding_families <- c('Culicidae', 'Simuliidae', 'Tabanidae')
 
