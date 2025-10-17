@@ -125,6 +125,7 @@ abundant_bin_summary <- main_df %>%
   head(retention_threshold) %>%
   mutate(bold_url = paste0('https://portal.boldsystems.org/bin/',BIN))
 
+# table is not used in manuscript text or SI, but referred to in-text (lines 284 onwards in Sep/Oct 2025 submission)
 write_csv(abundant_bin_summary, 'results/abundant_bins.csv')
 
 abundant_bin_summary %>%
