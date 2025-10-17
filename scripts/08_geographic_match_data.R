@@ -84,7 +84,7 @@ top_20_nshared_tib %>%
   rename(Country = country,
          `Geographic region` = geographic_region,
          `Number of shared BINs` = n_shared_bins) %>%
-  write_csv(here('results', 'tbl_4_top_20_shared_bins.csv'))
+  write_csv(here('results', 'table_4_top_20_shared_bins.csv'))
 
 # Organise data --------------------
 
