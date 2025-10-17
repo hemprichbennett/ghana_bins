@@ -2,7 +2,8 @@ library(tidyverse)
 library(bold)
 
 # read in the data from the previous script
-in_df <- read_csv('data/processed_data/our_organised_bold_data.csv')
+in_df <- read_csv('data/processed_data/bold_and_earthcape_combined.csv') %>%
+  janitor::clean_names()
 
 # make a vector of the unique BINs
 unique_bins <- in_df %>%

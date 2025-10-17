@@ -1,6 +1,6 @@
 library(tidyverse)
 library(taxize)
-bold_data <- read_csv('data/processed_data/our_organised_bold_data.csv')
+bold_data <- read_csv('data/processed_data/bold_and_earthcape_combined.csv')
 
 # a subset of field to use in later analyses: we only care about samples
 # from our field sites, so exclude other 'test' samples

@@ -122,7 +122,6 @@ bold_data %>%
   filter(sample_naming_convention == 'unknown') %>%
   pull(field_id)
 
-write_csv(bold_data, 'data/processed_data/our_organised_bold_data.csv')
 
 # (for plotting later) make a string giving the number of samples which we have site information
 # for. 
