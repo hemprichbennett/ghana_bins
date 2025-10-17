@@ -228,8 +228,7 @@ trap_taxonomy_table <- trap_taxonomy_for_plotting %>%
                                            digits = 2)) %>%
   pivot_wider(names_from = trap_type, values_from = percent_of_trap_abundance)
 
-write_csv(trap_taxonomy_table, file = here('results', 'manuscript_tables',
-                                           'trap_taxonomy_percentage.csv'))
+write_csv(trap_taxonomy_table, file = here('results','table_2_trap_taxonomy_percentage.csv'))
 
 # NMDS analyses ---------------------------------------------------------------
 nmds_inputs <- list()
