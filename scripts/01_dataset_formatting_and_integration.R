@@ -341,7 +341,7 @@ write_csv(too_many_cols,
 
 
 # make basic summary stats
-diversity_stats <- bold_and_earthcape_combined %>%
+diversity_stats <- too_many_cols %>%
   filter(!is.na(type)) %>%
   group_by(type, bin) %>%
   summarise(nbins = n()) %>%
@@ -353,7 +353,7 @@ diversity_stats <- bold_and_earthcape_combined %>%
 # make a tibble of the number of BINs that were unique to a given trap type (e.g.)
 # how many BINs were ONLY caught in a CDC trap
 # first, a vector of BINS only caught in one trap type
-unique_bins <- bold_and_earthcape_combined %>%
+unique_bins <- too_many_cols %>%
   group_by(bin) %>%
   # the number of trap types each bin was captured in
   summarise(n_trap_types = length(unique(type))) %>%
@@ -361,14 +361,14 @@ unique_bins <- bold_and_earthcape_combined %>%
   pull(bin)
 
 # now use that vector to find the number of unique captures
-unique_trap_vals <- bold_and_earthcape_combined %>%
+unique_trap_vals <- too_many_cols %>%
   filter(bin %in% unique_bins) %>%
   select(bin, type) %>%
   distinct() %>%
   group_by(type) %>%
   summarise(`Number of BINs unique to the trap type` = n())
 
-tbl_1 <- bold_and_earthcape_combined %>% 
+tbl_1 <- too_many_cols %>% 
   filter(!is.na(type)) %>% 
   group_by(type) %>% 
   summarise(`Number of samples` = n(), 
