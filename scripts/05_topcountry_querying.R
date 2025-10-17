@@ -46,6 +46,13 @@ countries_to_query <- c(country_rankings$country, african_countries) %>%
   # remove duplicates
   unique()
 
+
+# Note: the BOLD connection can be flaky and occasionally drop connections. In
+# my experience it works best to run this script when the americas are asleep,
+# e.g. the UK morning. The code is written so that if it needs to be re-run 
+# because the connection dropped, it will not re-query a country that has 
+# recently had a query complete. This makes it easier to re-run without 
+# losing progress.
 country_list <- list()
 for(chosen_country in countries_to_query){
   print(chosen_country)
