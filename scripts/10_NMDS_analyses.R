@@ -506,5 +506,5 @@ family_temporal_counts %>%
   arrange(order) %>%
   rename(Family = taxa, Order = order) %>%
   select(Order, Family, Day, Night) %>%
-  write_csv(file = here('results', 'supplementary_table_6_diurnal_activity.csv'))
+  write_csv(file = here('results', 'si_tbl_6_diurnal_activity.csv'))
 
