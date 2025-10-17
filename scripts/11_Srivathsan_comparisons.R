@@ -74,4 +74,4 @@ rankings_tib %>%
   filter(in_Srivathsan == F)
 
 
-write_csv(rankings_tib, file = here('results', 'trap_family_rankings.csv'))
+write_csv(rankings_tib, file = here('results', 'si_tbl_5_trap_family_rankings.csv'))
