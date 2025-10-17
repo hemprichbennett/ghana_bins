@@ -90,6 +90,31 @@ main_df <- overall_availability %>%
             by = c('BIN' = 'bin')) %>%
   left_join(common_names)
 
+# save this as a csv, as the big dataset will be useful to us later
+write_csv(main_df, 'data/processed_data/bold_data_with_availability.csv')
+
+# this returns the OVERALL number of SAMPLES which had a given
+# availability
+main_df %>%
+  group_by(order, available, english_common_name) %>%
+  summarise(n = n()) %>%
+  pivot_wider(names_from = available, values_from = n, 
+              values_fill = 0,
+              names_sort = T) %>%
+  write_csv('results/unique_data/overall_sample_uniqueness.csv')
+
+
+# now for number of BINs
+overall_uniqueness <- main_df %>%
+  select(order, available, english_common_name, BIN) %>%
+  distinct() %>%
+  group_by(order, available, english_common_name) %>%
+  summarise(n = n()) %>%
+  pivot_wider(names_from = available, values_from = n, 
+              values_fill = 0,
+              names_sort = T)
+
+write_csv(overall_uniqueness, 'data/processed_data/overall_bin_uniqueness.csv')
 
 # summary information for the 200 most common BINs
 retention_threshold <- 200
