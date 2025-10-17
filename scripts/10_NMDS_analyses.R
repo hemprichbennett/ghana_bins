@@ -322,7 +322,7 @@ big_nmds_plot <- ggplot(data=nmds_scores,
   # increase point size in legend
   guides(colour = guide_legend(override.aes = list(size=10)))
 
-ggsave(here('figures', 'nmds', 'fig_x_big_nmds_plot.pdf'), big_nmds_plot,
+ggsave(here('figures', 'nmds', 'fig_2_big_nmds_plot.pdf'), big_nmds_plot,
        dpi = 600)
 
 # save the habitat NMDS plot as a basic gridextra format one
@@ -331,7 +331,7 @@ multipanel_nmds <- grid.arrange(nmds_habitat_plots$order,
              nmds_habitat_plots$genus,
              nmds_habitat_plots$bin,
              ncol = 2)
-ggsave(multipanel_nmds, filename = here('figures', 'fig_si_nmds.png'),
+ggsave(multipanel_nmds, filename = here('figures', 'fig_si4_nmds.png'),
        width = 10, height = 7)
 # Analyses ----------------------------------------------------------------
 
@@ -480,7 +480,7 @@ big_malaise_nmds_plot <- ggplot(data=malaise_nmds_scores,
   guides(colour = guide_legend(override.aes = list(size=10)))
 
 big_malaise_nmds_plot
-ggsave(here('figures', 'nmds', 'si_fig_x_malaise_nmds_plot.png'), big_malaise_nmds_plot)
+ggsave(here('figures', 'nmds', 'si_fig_7_malaise_nmds_plot.png'), big_malaise_nmds_plot)
 
 
 
@@ -526,5 +526,5 @@ family_temporal_counts %>%
   arrange(order) %>%
   rename(Family = taxa, Order = order) %>%
   select(Order, Family, Day, Night) %>%
-  write_csv(file = here('results', 'supplementary_table_diurnal_activity.csv'))
+  write_csv(file = here('results', 'supplementary_table_6_diurnal_activity.csv'))
 
