@@ -90,8 +90,6 @@ main_df <- overall_availability %>%
             by = c('BIN' = 'bin')) %>%
   left_join(common_names)
 
-# save this as a csv, as the big dataset will be useful to us later
-write_csv(main_df, 'data/processed_data/bold_data_with_availability.csv')
 
 # now for number of BINs
 overall_uniqueness <- main_df %>%
