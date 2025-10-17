@@ -353,30 +353,11 @@ for(taxa in taxonomic_levels){
   
   tests_list[[taxa]] %>%
     broom::tidy() %>%
+    # save summary values used in-manuscript text
     write_csv(here('results', 'adonis', paste0(taxa, '_summary.csv')))
 }
 
 tests_list[['genus']]
-
-# test for betadispersion
-library(broom)
-order_bd <- betadisper(dist(nmds_inputs[['order']]$trap_matrix), nmds_outputs[['order']]$scores$trap_type)
-# is the data betadispersed? ("Is there difference in within-group variation 
-# between groups." I think.)
-anova(order_bd) %>%
-  tidy() %>%
-  write_csv(here('results', 'adonis', 'order_betadispersion.csv'))
-
-
-family_bd <- betadisper(dist(nmds_inputs[['family']]$trap_matrix), nmds_outputs[['family']]$scores$trap_type)
-# is the data betadispersed? ("Is there difference in within-group variation 
-# between groups." I think.)
-anova(family_bd) %>%
-  tidy() %>%
-  write_csv(here('results', 'adonis', 'family_betadispersion.csv'))
-
-
-
 
 
 # Malaise trap time analyses ----------------------------------------------
