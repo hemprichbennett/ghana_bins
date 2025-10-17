@@ -8,6 +8,7 @@ library(janitor)
 library(taxize)
 library(here)
 library(tidyverse)
+library(vegan)
 
 
 
@@ -339,3 +340,41 @@ write_csv(too_many_cols,
           file = here('data', 'processed_data', 
                       'bold_and_earthcape_combined.csv'))
 
+
+# make basic summary stats
+diversity_stats <- bold_and_earthcape_combined %>%
+  filter(!is.na(type)) %>%
+  group_by(type, bin) %>%
+  summarise(nbins = n()) %>%
+  ungroup() %>%
+  group_by(type) %>%
+  summarise(`Shannon Diversity` = diversity(nbins)) %>%
+  mutate(`Shannon Diversity` = signif(`Shannon Diversity`, digits = 3))
+
+# make a tibble of the number of BINs that were unique to a given trap type (e.g.)
+# how many BINs were ONLY caught in a CDC trap
+# first, a vector of BINS only caught in one trap type
+unique_bins <- bold_and_earthcape_combined %>%
+  group_by(bin) %>%
+  # the number of trap types each bin was captured in
+  summarise(n_trap_types = length(unique(type))) %>%
+  filter(n_trap_types ==1) %>%
+  pull(bin)
+
+# now use that vector to find the number of unique captures
+unique_trap_vals <- bold_and_earthcape_combined %>%
+  filter(bin %in% unique_bins) %>%
+  select(bin, type) %>%
+  distinct() %>%
+  group_by(type) %>%
+  summarise(`Number of BINs unique to the trap type` = n())
+
+tbl_1 <- bold_and_earthcape_combined %>% 
+  filter(!is.na(type)) %>% 
+  group_by(type) %>% 
+  summarise(`Number of samples` = n(), 
+            `Number of BINs` = length(unique(bin))) %>%
+  left_join(unique_trap_vals)%>%
+  left_join(diversity_stats) 
+
+write_csv(tbl_1, file = here('results', 'table_1_basic_summary_stats.csv'))
