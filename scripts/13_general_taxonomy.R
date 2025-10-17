@@ -35,21 +35,11 @@ species_trap_counts <- big_in_tib %>%
   # sort the rows by Order, then Family, then Species
   arrange(Order, Family, Species) %>%
   select(Order, Family, Species, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
-
+# this table doesn't make it into the paper, but values of it are used in-text
 write_csv(species_trap_counts, 
           file = here('results', 'taxonomic_summaries', 'species_trap_counts.csv'))  
 
-genus_trap_counts <- big_in_tib %>%
-  filter(!is.na(Genus), !is.na(type)) %>%
-  group_by(Order, Family, Genus, type) %>%
-  summarise(n_samples = n()) %>%
-  pivot_wider(names_from = type, values_from = n_samples, 
-              values_fill = list(n_samples = 0)) %>%
-  arrange(Order, Family, Genus) %>%
-  select(Order, Family, Genus, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
-write_csv(genus_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'genus_trap_counts.csv'))  
 
 family_trap_counts <- big_in_tib %>%
   filter(!is.na(Family), !is.na(type)) %>%
@@ -61,7 +51,7 @@ family_trap_counts <- big_in_tib %>%
   select(Order, Family, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
 write_csv(family_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'family_trap_counts.csv')) 
+          file = here('results', 'taxonomic_summaries', 'si_tbl_2_family_trap_counts.csv')) 
 
 
 order_trap_counts <- big_in_tib %>%
@@ -74,7 +64,7 @@ order_trap_counts <- big_in_tib %>%
   select(Order, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
 
 write_csv(order_trap_counts, 
-          file = here('results', 'taxonomic_summaries', 'order_trap_counts.csv')) 
+          file = here('results', 'taxonomic_summaries', 'si_tbl_1_order_trap_counts.csv')) 
 
 # Make malaise trap temporal abundance table -----------------------------------
 
@@ -102,22 +92,8 @@ malaise_trap_arthropods <- big_in_tib %>%
   select(Order, Family, Day, Night)
   
 write_csv(malaise_trap_arthropods, 
-          file = here('results', 'taxonomic_summaries', 'malaise_trap_arthropods.csv'))
+          file = here('results', 'taxonomic_summaries', 'si_tbl_6_malaise_trap_arthropods.csv'))
 
-
-# make a sheet with just the time-identified malaise trap captures, and the heath
-# trap captures
-night_time_families <- full_join(malaise_trap_arthropods, 
-                                 family_trap_counts) %>%
-  # select only the columns we care about
-  select(Order, Family, Day, Night, Heath) %>%
-  # remove any rows containing zero families from the two remaining trapping 
-  # methods
-  filter(sum(Day, Night, Heath)> 0)
-
-write_csv(night_time_families,
-          file = here('results', 'taxonomic_summaries', 'malaise_and_heath.csv')
-          )
 
 # Pest species ------------------------------------------------------------
 
@@ -142,7 +118,7 @@ pest_detections <- inner_join(species_trap_counts, pest_sp, by = c('Species' = '
 
 # write file
 write_csv(pest_detections, 
-          file = here('results', 'taxonomic_summaries', 'pest_detections.csv'))
+          file = here('results', 'taxonomic_summaries', 'si_tbl_3_pest_detections.csv'))
 
 
 
@@ -167,33 +143,6 @@ percent_bins_crop_pests <- length(unique(pest_occurrence_tib$bin)) /
 # possible_pest taxa ------------------------------------------------------
 
 
-possible_pest_families <- c('Cecidomyiidae', 
-                            'Sphaeroceridae', 'Aphididae',
-  'Simuliidae', 'Ceratopogonidae', 'Tabanidae', 'Rhagionidae', 'Culicidae')
-
-possible_pest_genera <- big_in_tib %>%
-  filter(Family %in% possible_pest_families) %>%
-  group_by(Order, Family, Genus, type) %>%
-  summarise(n_samples = n()) %>%
-  pivot_wider(names_from = type, values_from = n_samples, 
-              values_fill = list(n_samples = 0)) %>%
-  arrange(Order, Family) %>%
-  select(Order, Family, Genus, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
-
-write_csv(possible_pest_genera, 
-          file = here('results', 'taxonomic_summaries', 'possible_pest_species.csv'))
-
-possible_pest_species <- big_in_tib %>%
-  filter(Family %in% possible_pest_families) %>%
-  group_by(Order, Family, Species, type) %>%
-  summarise(n_samples = n()) %>%
-  pivot_wider(names_from = type, values_from = n_samples, 
-              values_fill = list(n_samples = 0)) %>%
-  arrange(Order, Family) %>%
-  select(Order, Family, Species, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
-
-write_csv(possible_pest_species, 
-          file = here('results', 'taxonomic_summaries', 'possible_pest_species.csv'))
 
 
 
@@ -210,10 +159,6 @@ possible_bloodfeeders <- big_in_tib %>%
   summarise(n_samples = n(),
             nbins = length(unique(bin))) 
 
-write_csv(possible_bloodfeeders, 
-          file = here('results', 'taxonomic_summaries', 
-                      'possible_bloodfeeders.csv'))
-
 percent_poss_bloodfeeders_bins <- sum(possible_bloodfeeders$nbins / 
                                    length(unique(big_in_tib$bin)) * 100)
 
@@ -229,6 +174,9 @@ poss_bloodfeeder_table <- big_in_tib %>%
               values_fill = list(n_samples = 0)) %>%
   arrange(Order, Family) %>%
   select(Order, Family, Cdc, Heath, Malaise, Pitfall, `Yellow Pan`)
+
+write_csv(poss_bloodfeeder_table, 
+          file = here('results', 'taxonomic_summaries', 'si_tbl_4_bloodfeeder_detections.csv'))
 
 prob_bloodfeeding_families <- c('Culicidae', 'Simuliidae', 'Tabanidae')
 
