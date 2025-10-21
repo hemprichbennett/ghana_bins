@@ -1,3 +1,10 @@
+# this script gets data from NCBI taxize package to find common names etc
+# for our samples. 
+# THIS SCRIPT MUST BE RUN INTERACTIVELY, rather than e.g. using the Rscript
+# command in the terminal, as taxize will require user input where there are
+# multiple matches for a given taxon name (e.g. occasionally a beetle shares
+# its genus name with a plant, and taxize can't tell which one we want)
+
 library(tidyverse)
 library(taxize)
 bold_data <- read_csv('data/processed_data/bold_and_earthcape_combined.csv')
