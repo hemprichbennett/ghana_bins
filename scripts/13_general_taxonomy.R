@@ -99,7 +99,7 @@ write_csv(malaise_trap_arthropods,
 
 # compare with a dataset downloaded from DEFRA, 2025-07-09
 # https://planthealthportal.defra.gov.uk/pests-and-diseases/uk-plant-health-risk-register/downloadEntireRiskRegister.cfm
-defra_pests <- read_csv(here('data', 'raw_data', 'pest_taxa', 'Risk Register 09_July_2025 16_43_13.csv')) %>%
+defra_pests <- read_csv(here('data', 'raw_data', 'pest_taxa', 'Risk_Register 09_July_2025 16_43_13.csv')) %>%
   janitor::clean_names() %>%
   rename(common_name = common_name_or_abbreviation,
          binomial_name = pest_name)
