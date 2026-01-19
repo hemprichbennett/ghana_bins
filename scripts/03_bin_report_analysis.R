@@ -7,7 +7,8 @@
 # Read in and explore bin reports ------------------------------------------
 
 library(tidyverse)
-our_bin_reports <- list.files(path = 'data/processed_data',
+library(here)
+our_bin_reports <- list.files(path = here('data', 'processed_data'),
                               pattern = 'bin_report',
                               recursive = T,
                               full.names = T) %>%
@@ -45,10 +46,12 @@ bind_rows(duplicate_bin_list) %>% group_by(actually_unique) %>% summarise(n = n(
 
 # Read in and check previous csvs -----------------------------------------
 
-our_big_df <- read_csv('data/processed_data/bold_and_earthcape_combined.csv')
-bold_public_info_df <- read_csv('data/processed_data/bold_public_bin_matches.csv')
+our_big_df <- read_csv(here('data', 'processed_data',
+                            'bold_and_earthcape_combined.csv'))
+bold_public_info_df <- read_csv(here('data', 'processed_data',' 
+                                     bold_public_bin_matches.csv'))
 
-common_names <- read_csv('data/order_common_names.csv')
+common_names <- read_csv(here('data', 'order_common_names.csv'))
 
 our_bin_reports %>%
   filter(Unique == T) %>%
@@ -101,7 +104,8 @@ overall_uniqueness <- main_df %>%
               values_fill = 0,
               names_sort = T)
 
-write_csv(overall_uniqueness, 'data/processed_data/overall_bin_uniqueness.csv')
+write_csv(overall_uniqueness, here('data', 'processed_data', 
+                                   'overall_bin_uniqueness.csv'))
 
 # summary information for the 200 most common BINs
 retention_threshold <- 200
@@ -144,3 +148,35 @@ number_privately_held <- main_df %>% filter(available == 'Already sequenced, no 
 
 # percent hidden
 number_privately_held / total_n_bins * 100
+
+
+
+# Make a plot of the sequence lengths -------------------------------------
+
+#Some failed sequences have length zero, some have length NA. These both need 
+# accounting for
+
+for_seqlength_plot <- our_big_df %>%
+  # format the column better for analysis, as it's currently in a weird 
+  # character format
+  mutate(seqlength = gsub('\\[.+', '', coi_5p_seq_length),
+         seqlength = as.numeric(seqlength),
+         seqlength = na_if(seqlength, 0))
+
+ggplot(filter(for_seqlength_plot, !is.na(seqlength)), aes(x = seqlength))+
+  geom_histogram(binwidth = 10)+
+  theme_bw()+
+  xlab('Sequence length')+
+  ylab('Number of sequences')
+
+ggsave(filename = here('figures', 'fig_si_x_seqlengths.png'), width = 12, height = 7)
+  
+# summary stats for plot
+mean(for_seqlength_plot$seqlength, na.rm = T)
+sd(for_seqlength_plot$seqlength, na.rm = T)
+
+# the number of samples that DID NOT generate a sequence
+length(which(is.na(for_seqlength_plot$seqlength)))
+
+# the number of samples that DID generate a sequence
+length(which(!is.na(for_seqlength_plot$seqlength)))
