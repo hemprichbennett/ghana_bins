@@ -222,13 +222,21 @@ ggplot(trap_taxonomy_for_plotting,
                        name ='Percent of\nsamples containing')
 
 # make a table of the same values
-trap_taxonomy_table <- trap_taxonomy_for_plotting %>%
+trap_taxonomy_percentage_table <- trap_taxonomy_for_plotting %>%
   select(order, trap_type, percent_of_trap_abundance) %>%
   mutate(percent_of_trap_abundance = round(percent_of_trap_abundance,
                                            digits = 2)) %>%
   pivot_wider(names_from = trap_type, values_from = percent_of_trap_abundance)
 
-write_csv(trap_taxonomy_table, file = here('results','table_2_trap_taxonomy_percentage.csv'))
+write_csv(trap_taxonomy_percentage_table, file = here('results','table_2_trap_taxonomy_percentage.csv'))
+
+trap_taxonomy_abundance_table <- trap_taxonomy_for_plotting %>%
+  select(order, trap_type, n_samples_per_taxa) %>%
+  pivot_wider(names_from = trap_type, 
+              values_from = n_samples_per_taxa, 
+              values_fill = 0)
+
+write_csv(trap_taxonomy_abundance_table, file = here('results', 'si_table_trap_taxonomy_abundance.csv'))
 
 # NMDS analyses ---------------------------------------------------------------
 nmds_inputs <- list()
