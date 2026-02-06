@@ -48,8 +48,8 @@ bind_rows(duplicate_bin_list) %>% group_by(actually_unique) %>% summarise(n = n(
 
 our_big_df <- read_csv(here('data', 'processed_data',
                             'bold_and_earthcape_combined.csv'))
-bold_public_info_df <- read_csv(here('data', 'processed_data',' 
-                                     bold_public_bin_matches.csv'))
+bold_public_info_df <- read_csv(here('data', 'processed_data',
+                                     'bold_public_bin_matches.csv'))
 
 common_names <- read_csv(here('data', 'order_common_names.csv'))
 
@@ -116,7 +116,7 @@ abundant_bin_summary <- main_df %>%
   head(retention_threshold) %>%
   mutate(bold_url = paste0('https://portal.boldsystems.org/bin/',BIN))
 
-# table is not used in manuscript text or SI, but referred to in-text (lines 284 onwards in Sep/Oct 2025 submission)
+# table is not used in manuscript text or SI, but referred to in-text (lines 284 onwards in Sep/Oct 2025 submission)
 write_csv(abundant_bin_summary, 'results/abundant_bins.csv')
 
 abundant_bin_summary %>%
@@ -163,13 +163,41 @@ for_seqlength_plot <- our_big_df %>%
          seqlength = as.numeric(seqlength),
          seqlength = na_if(seqlength, 0))
 
-ggplot(filter(for_seqlength_plot, !is.na(seqlength)), aes(x = seqlength))+
-  geom_histogram(binwidth = 10)+
-  theme_bw()+
-  xlab('Sequence length')+
-  ylab('Number of sequences')
 
-ggsave(filename = here('figures', 'fig_si_x_seqlengths.png'), width = 12, height = 7)
+library(ggrepel)
+
+# choose rule
+threshold <- quantile(for_seqlength_plot$seqlength, 0.99, na.rm = T)  # top 1%
+df <- within(for_seqlength_plot, is_outlier <- seqlength > threshold)
+
+ggplot(df, aes(y = seqlength, x = 0)) +
+  geom_jitter(height = 0.12, alpha = 0.3) +
+  #geom_boxplot(outliers = F)+
+  theme_bw()+
+  #scale_x_log10()+
+  ylab('Sequence length (bp)')+
+  xlab(NULL)+
+  theme(
+    text = element_text(size = 15),
+    axis.text.x  = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.line.x  = element_blank()
+  )
+  # geom_point(data = subset(df, is_outlier), aes(x = seqlength, y = 0), color = "red", size = 2) +
+  # ggrepel::geom_text_repel(data = subset(df, is_outlier),
+  #                          aes(x = seqlength, y = 0, label = seqlength),
+  #                          nudge_y = 0.2) +
+  # #theme_void() +
+  # labs(title = "Outliers highlighted (top 1%)")
+
+
+# ggplot(filter(for_seqlength_plot, !is.na(seqlength)), aes(x = seqlength))+
+#   geom_histogram(binwidth = 10)+
+#   theme_bw()+
+#   xlab('Sequence length')+
+#   ylab('Number of sequences')
+
+ggsave(filename = here('figures', 'fig_si_x_seqlengths.png'), width = 10, height = 12)
   
 # summary stats for plot
 mean(for_seqlength_plot$seqlength, na.rm = T)
