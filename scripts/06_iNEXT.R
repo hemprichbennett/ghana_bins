@@ -111,10 +111,6 @@ type1_plot <- ggplot(type1_df, aes(x=x, y=y, colour=Assemblage)) +
         text=element_text(size=10))
 type1_plot
 
-ggsave(filename = here('figures', 'inext_plots', 'type1_inext_plot.pdf'),
-       type1_plot,
-       dpi = 600)
-
 ggsave(filename = here('figures', 'fig_1_type1_inext_plot.pdf'),
        type1_plot,
        dpi = 600,
@@ -144,11 +140,8 @@ type2_plot <- ggplot(type2_df, aes(x=x, y=y, colour=Assemblage)) +
         text=element_text(size=10))
 type2_plot
 
-ggsave(filename = here('figures', 'inext_plots', 'type2_inext_plot.png'),
-       type2_plot,
-       dpi = 600)
 
-ggsave(filename = here('figures', 'supplementary_figure_type2_inext_plot.png'),
+ggsave(filename = here('figures', 'supplementary_figure5_type2_inext_plot.png'),
        type2_plot,
        dpi = 600, 
        width = 11.5)
@@ -199,7 +192,7 @@ alltaxa_gginext <- ggiNEXT(z, type=1, color.var="Assemblage")+ theme_bw()+
 
 
 alltaxa_gginext
-ggsave(alltaxa_gginext, file = here('figures', 'inext_plots', 'alltaxa_plot.png'),
+ggsave(alltaxa_gginext, file = here('figures', 'si_alltaxa_plot.png'),
        height = 8, width = 15, dpi = 600)
 
 

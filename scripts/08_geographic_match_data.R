@@ -18,7 +18,7 @@ bold_and_earthcape_combined <- read_csv(
   janitor::clean_names() %>%
   # remove columns that aren't needed, and can confuse the merge later
   select(-sex, - starts_with('country')) %>%
-  # rename a column that has a stupidly vague name (past-Dave is an ass)
+  # rename a column that has a stupidly vague name
   rename(trap_type = type) %>%
   # remove any NA values that have snuck through
   #~~~~~~~~~~~~~~~~
@@ -65,33 +65,7 @@ combined_tib <- public_matches %>%
   select(bin, country, geographic_region, 
          ends_with('_trap'))
 
-# make a tibble of the number of BINs per geographic region that were found 
-# by a given trapping method
-region_bin_traps <- combined_tib %>%
-  pivot_longer(cols = ends_with('_trap'),
-               names_to = 'trap_type', values_to = 'n_matches') %>%
-  filter(n_matches > 0) %>%
-  group_by(geographic_region, trap_type) %>%
-  summarise(n_bins_found = n()) %>%
-  # make trap_type a nicer string to use in the plot legend
-  mutate(trap_type = gsub('_', ' ', trap_type),
-         trap_type = str_to_sentence(trap_type),
-         trap_type = gsub('Cdc', 'CDC', trap_type))
-
-# make a barplot of it
-ggplot(region_bin_traps, aes(fill = trap_type, x = geographic_region,
-                             y = n_bins_found))+
-  geom_bar(position='dodge', stat='identity')+
-  scale_fill_viridis_d()+
-  theme_bw()+
-  theme(legend.position = 'bottom')+
-  guides(fill = guide_legend(title = 'Trap type:'))+
-  labs(x = 'Geographic region', 
-       y = 'Number of publicly available BINS matching ones in our dataset')
-
-
-
-# Make a plot of the top 20 countries -------------------------------------
+# Make a table of the top 20 countries -------------------------------------
 
 # calculate the number of shared BINs
 country_nshared_tib <- combined_tib %>%
@@ -104,28 +78,13 @@ top_20_nshared_tib <- country_nshared_tib %>%
   slice_max(n_shared_bins, n = 20) %>%
   mutate(country = fct(country))
 
-top20_plot <- ggplot(top_20_nshared_tib, aes(x = n_shared_bins, y = fct_rev(country), fill = geographic_region)) +
-  geom_bar(stat = 'identity')+
-  theme_bw()+
-  scale_fill_viridis_d()+
-  xlab('Number of publicly available BINs shared with our dataset')+
-  ylab('Country')+
-  theme(legend.position = 'bottom')+ 
-  labs(fill = 'Geographic area')
-
-top20_plot
-ggsave(plot = top20_plot,
-       filename = here('figures', 'fig_5_topcountries_plot.pdf'),
-       dpi = 600,
-       width = 8)
-
 top_20_nshared_tib %>%
   mutate(Rank = seq(1,20)) %>%
   relocate(Rank) %>%
   rename(Country = country,
          `Geographic region` = geographic_region,
          `Number of shared BINs` = n_shared_bins) %>%
-  write_csv(here('results', 'top_20_shared_bins.csv'))
+  write_csv(here('results', 'table_4_top_20_shared_bins.csv'))
 
 # Organise data --------------------
 
@@ -189,97 +148,11 @@ distance_plot <- ggplot(distances_and_nbins_tib, aes(y = n_shared_bins, x = dist
   geom_point()+ 
   geom_smooth(method = 'lm')+
   theme_bw()+
-#  scale_x_log10(limits = c(1, NA))+
-#  scale_y_log10()+
-  #scale_colour_viridis_d()+
   ylab('Number of publicly available BINs shared with our dataset')+
   xlab('Distance from Ghana (km)')+
-  labs(colour = 'Geographic area')#+
-  #facet_wrap(.~ geographic_region, ncol =3)
+  labs(colour = 'Geographic area')
 
 distance_plot
 ggsave(plot = distance_plot,
        filename = here('figures', 'fig_5_dist_and_shared_bins.pdf'),
        dpi = 600)
-
-# Analyse trap-composition of BINs with no public matches -----------------
-
-unmatched <- bold_and_earthcape_combined %>%
-  filter(!bin %in% public_matches$bin,
-         !is.na(order))
-
-
-unmatched_summary <- unmatched %>%
-  group_by(order, trap_type) %>%
-  summarise(nsamples = n(), n_shared_bins = length(unique(bin)))
-
-unique_sample_trapping <- ggplot(unmatched_summary, aes(x = trap_type,
-                              y = n_shared_bins,
-                              fill = trap_type))+
-  geom_bar(position='dodge', stat='identity')+
-  facet_wrap(.~ order, scales = 'free_y')+
-  scale_fill_viridis_d()+
-  theme_bw()+
-  theme(legend.position = 'bottom')+
-  guides(fill = guide_legend(title = 'Trap type:'))+
-  labs(x = 'Trap type', 
-       y = 'Number of BINs that were not publicly available on BOLD')
-
-
-
-trap_and_status <- bold_and_earthcape_combined %>%
-  filter(!is.na(order)) %>%
-  # make a boolean variable, for if the BIN was/was not publicly available
-  # prior to our dataset being made open
-  mutate(publicly_available = 
-           ifelse(bin %in% public_matches$bin, 'Already publicly available',
-                  'Not publicly available')) %>%
-  group_by(order, trap_type, publicly_available) %>%
-  summarise(nsamples = n(), n_shared_bins = length(unique(bin)))
-
-
-# A function to ensure that the y axis labels' breaks are always integers, taken
-# from https://stackoverflow.com/questions/15622001/how-to-display-only-integer-values-on-an-axis-using-ggplot2
-integer_breaks <- function(n = 5, ...) {
-  fxn <- function(x) {
-    breaks <- floor(pretty(x, n, ...))
-    names(breaks) <- attr(breaks, "labels")
-    breaks
-  }
-  return(fxn)
-}
-
-trap_bin_availability_plot <- ggplot(trap_and_status, aes(x = trap_type,
-                              y = n_shared_bins,
-                              #colour = trap_type,
-                            fill = publicly_available))+
-  geom_bar(position='stack', stat='identity')+
-  
-  scale_fill_manual(values = c('steelblue', 'red'))+
-  theme_bw()+
-  # ensure that the y-axis breaks are always integers, using the function above
-  scale_y_continuous(breaks = integer_breaks())+
-  theme(legend.position = 'bottom',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        text=element_text(size=20))+
-  #guides(fill = guide_legend(title = 'Trap type:'))+
-  labs(x = 'Trap type', 
-       y = 'Number of BINs that were/weren\'t publicly available on BOLD',
-       fill = 'BIN availability')
-
-trap_bin_availability_tall <- trap_bin_availability_plot +
-  facet_wrap(.~ order, scales = 'free_y')
-ggsave(filename = here('figures', 'trap_bin_availability.jpeg'),
-       dpi = 600,
-       plot = trap_bin_availability_tall)
-
-
-trap_bin_availability_wide <- trap_bin_availability_plot +
-  facet_wrap(.~ order, scales = 'free_y', ncol = 7)
-ggsave(filename = here('figures', 'trap_bin_availability_wide.jpeg'),
-       dpi = 600,
-       plot = trap_bin_availability_wide, height = 10, width = 20)
-
-ggsave(filename = here('figures', 'fig_1_trap_bin_availability_wide.jpeg'),
-       dpi = 600,
-       plot = trap_bin_availability_wide, height = 10, width = 20)

@@ -74,19 +74,6 @@ lot_bottle_counts <- all_arthropod_data %>%
   summarise(n_sublots = length(unique(lot)))
 
 
-#the number of fully-sequenced bottles
-lot_bottle_counts %>% filter(n_sublots >=4) %>% nrow()
-
-# the number of malaise lots
-nrow(lot_bottle_counts)
-
-# plot the number of sublots per lot
-ggplot(lot_bottle_counts, aes(x = n_sublots)) + 
-  geom_histogram() +
-  theme_bw()+
-  xlab('Number of bottles per lot')+
-  ylab('Count')
-
 # get the ids of lots with 4 or more bottles
 lots_to_use <- lot_bottle_counts %>%
   filter(n_sublots >= 4)
@@ -183,10 +170,6 @@ abundance_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number
   labs(tag = 'A')
 abundance_boxplot
 
-ggsave(filename = here('figures', 'fig_6_abundance_boxplot.png'),
-       abundance_boxplot,
-       dpi = 600)
-
 ## BIN model ---------------------------------------------------------------
 
 precise_bin_model <- nlme::lme(variable_result ~ start_classification, 
@@ -227,9 +210,6 @@ bin_boxplot <- ggplot(filter(trap_insect_numbers, variable_type == 'Number of un
   labs(tag = 'B')
 bin_boxplot
 
-ggsave(filename = here('figures', 'fig_7_bin_boxplot.png'),
-       bin_boxplot,
-       dpi = 600)
 
 
 multipanel_boxplot <- grid.arrange(abundance_boxplot, bin_boxplot, ncol = 2)
@@ -251,4 +231,3 @@ bf.test(variable_result ~ coarse_timing, data = filter(trap_insect_numbers,
 # test effect of day/night time on number of BINs
 bf.test(variable_result ~ coarse_timing, data = filter(trap_insect_numbers, 
                                                        variable_type == 'Number of unique BINs'))
-

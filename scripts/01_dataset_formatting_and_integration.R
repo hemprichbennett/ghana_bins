@@ -8,6 +8,7 @@ library(janitor)
 library(taxize)
 library(here)
 library(tidyverse)
+library(vegan)
 
 
 
@@ -121,7 +122,6 @@ bold_data %>%
   filter(sample_naming_convention == 'unknown') %>%
   pull(field_id)
 
-write_csv(bold_data, 'data/processed_data/our_organised_bold_data.csv')
 
 # (for plotting later) make a string giving the number of samples which we have site information
 # for. 
@@ -340,191 +340,40 @@ write_csv(too_many_cols,
                       'bold_and_earthcape_combined.csv'))
 
 
-# Malaise trap debugging --------------------------------------------------
+# make basic summary stats
+diversity_stats <- too_many_cols %>%
+  filter(!is.na(type)) %>%
+  group_by(type, bin) %>%
+  summarise(nbins = n()) %>%
+  ungroup() %>%
+  group_by(type) %>%
+  summarise(`Shannon Diversity` = diversity(nbins)) %>%
+  mutate(`Shannon Diversity` = signif(`Shannon Diversity`, digits = 3))
 
-malaise_trap_data <- too_many_cols %>% 
-  filter(type == 'Malaise') %>%
-  mutate(overall_lot = gsub('\\..+', '', lot))
-
-malaise_trap_sample_counts <- malaise_trap_data %>% 
-  group_by(overall_lot) %>%
-  summarise(n_arthropods = n())
-
-ggplot(malaise_trap_sample_counts, aes(x = n_arthropods))+
-  geom_histogram()
-
-# Basic plotting ----------------------------------------------------------
-
-# function happily borrowed from https://stackoverflow.com/a/66583089
-# to make the histogram bins exactly one month wide. Otherwise they default to 
-# being ~30 days wide, which can get misleading
-by_month <- function(x,n=1){
-  seq(min(x,na.rm=T),max(x,na.rm=T),by=paste0(n," months"))
-}
-
-# for plotting, we'll want to have the x-axis going up in 6 month increments. So we want the 
-# first and last axis labels to be either January or July, depending on which is appropriate
-
-# get the first and last days in our dataset so far
-first_collection_day <- bold_field_data %>% pull(collection_date) %>% min(.)
-last_collection_day <- bold_field_data %>% pull(collection_date) %>% max(.)
-
-# make some values for happier plotting later, by giving some thresholds 
-# for the x-axis depending on our first and last collection day
-if(month(first_collection_day) <7){
-  date_1 <- paste0('01-01-', year(first_collection_day))
-  }else{
-  date_1 <- paste0('01-07-',year(first_collection_day))
-  }
-
-if(month(last_collection_day) <7){
-  date_2 <- paste0('01-07-', year(last_collection_day))
-}else{
-  date_2 <- paste0('01-01-',year(last_collection_day)+1)
-}
-
-# make a simple plot of the number of SAMPLES over time
-
-collection_date_histogram <- filter(bold_field_data, !is.na(exact_site)) %>%
-  ggplot(., aes(x = collection_date)) + 
-    # make the histogram breaks by month, using the function from above
-  geom_histogram(breaks = by_month(bold_field_data$collection_date)) +
-  # make subgraphs for each site
-  facet_wrap(.~ exact_site) +
-  # cosmetic improvements
-  theme_bw() +
-  theme(text = element_text(size = 20),
-        # rotate the x-axis labels
-        axis.text.x = element_text(angle = 45, hjust = 1))+
-  ggtitle(paste('Collection dates of the', nsamples, 'samples with metadata sequenced by', download_date))+
-  # manually set the x-axis scale
-    scale_x_date(breaks = seq(dmy(date_1), 
-                            dmy(date_2), 
-                            by="4 months"), 
-               date_labels = "%b\n%Y")+
-  xlab('Collection date') + 
-  ylab('Number of samples sequenced')
-# show it
-collection_date_histogram
-
-# save it
-ggsave('figures/collection_date_histogram.jpeg', collection_date_histogram,
-       width = 14)
-
-
-# make a plot of the number of samples of each taxonomic order sequenced
-# so far
-bold_field_data %>%
-  filter(!is.na(order)) %>%
-  group_by(order) %>%
-  summarise(nsamples = n()) %>%
-  ggplot(., aes(x = order, y = nsamples)) +
-  geom_bar(stat = 'identity')+
-  theme_bw()+
-  scale_y_continuous(trans = 'log10') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        text = element_text(size = 20))+
-  ggtitle(paste('Taxonomic orders of the', nsamples, 'samples sequenced by', download_date))+
-  labs(x = 'Taxonomic Order', y = 'Number of samples')
-ggsave('figures/sample_taxonomy.png', width = 14)
-
-
-# now the same plot, but split between sites
-
-bold_field_data %>%
-  filter(!is.na(order)) %>%
-  group_by(order, exact_site) %>%
-  filter(exact_site %in% c('Abutia Amegame', 'Mafi Agorve')) %>%
-  summarise(nsamples = n()) %>%
-  ggplot(., aes(x = order, y = nsamples)) +
-  geom_bar(stat = 'identity')+
-  facet_wrap(. ~ exact_site) +
-  theme_bw()+
-  scale_y_continuous(trans = 'log10') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        text = element_text(size = 20))+
-  ggtitle(paste('Taxonomic orders of the field samples sequenced by', download_date))+
-  labs(x = 'Taxonomic Order', y = 'Number of samples')
-ggsave('figures/site_taxonomy.png', width = 14)
-
-
-# iNEXT data prep ---------------------------------------------------------
-
-# now we can work on the BINs and their known taxonomic information.
-
-
-# basic checking of how many samples actually have a BIN assigned
-# so far
-n_unassigned <- bold_data %>%
-  filter(is.na(bin)) %>%
-  nrow(.)
-
-cat("The number of samples which don't yet have a bin is", n_unassigned, '.\n',
-    'This is', round(n_unassigned / nrow(bold_data) * 100, 2), 
-    '% of the', nrow(bold_data), ' samples which have been sequenced')
-
-overall_bin_frequencies <- bold_data %>%
-  filter(!is.na(bin)) %>%
+# make a tibble of the number of BINs that were unique to a given trap type (e.g.)
+# how many BINs were ONLY caught in a CDC trap
+# first, a vector of BINS only caught in one trap type
+unique_bins <- too_many_cols %>%
   group_by(bin) %>%
-  summarise(n = n())
+  # the number of trap types each bin was captured in
+  summarise(n_trap_types = length(unique(type))) %>%
+  filter(n_trap_types ==1) %>%
+  pull(bin)
 
-order_bin_frequencies <- bold_data %>%
-  filter(!is.na(bin)) %>%
-  group_by(bin, order) %>%
-  summarise(n = n()) %>%
-  filter(n > 0) 
+# now use that vector to find the number of unique captures
+unique_trap_vals <- too_many_cols %>%
+  filter(bin %in% unique_bins) %>%
+  select(bin, type) %>%
+  distinct() %>%
+  group_by(type) %>%
+  summarise(`Number of BINs unique to the trap type` = n())
 
-order_nsamples <- order_bin_frequencies %>% 
-  group_by(order) %>% 
-  summarise(nsamples = sum(n))
+tbl_1 <- too_many_cols %>% 
+  filter(!is.na(type)) %>% 
+  group_by(type) %>% 
+  summarise(`Number of samples` = n(), 
+            `Number of BINs` = length(unique(bin))) %>%
+  left_join(unique_trap_vals)%>%
+  left_join(diversity_stats) 
 
-# get the names of the orders with 40 or more
-# samples
-to_inext <- order_nsamples %>%
-  filter(nsamples > 500) %>%
-  filter(!is.na(order)) %>%
-  pull(order)
-
-# for the orders, make a list of their frequencies
-abundance_list <- list()
-for(chosen_order in to_inext){
-  
-  abundance_vec <- order_bin_frequencies %>%
-    filter(order == chosen_order) %>%
-    pull(n)
-  cat(chosen_order, 'contains', length(abundance_vec), 'different BINs\n')
-  # if the Order only contains less than 10 BINs, abandon it
-  if(length(abundance_vec) >= 40){
-    abundance_list[[chosen_order]] <-abundance_vec 
-  }
-  
-}
-
-
-# make the iNEXT objects --------------------------------------------------
-
-
-# a basic iNEXT object with all items on a single plot
-abun_iNEXT <- iNEXT(abundance_list, datatype = 'abundance')
-basic_gginext <- ggiNEXT(abun_iNEXT) + theme_classic()+
-  theme(legend.position = 'bottom') +
-  ggtitle(paste('BIN accumulation-rate of the', nsamples, 'samples sequenced by', download_date))+
-  xlab(paste('Number of samples sequenced')) +
-  ylab("BIN richness") # CHECK THAT THIS IS DEFINITELY WHAT IT SHOWS
-
-basic_gginext
-ggsave('figures/basic_gginext.png', basic_gginext,
-       width = 12)
-
-
-# now, we throw the kitchen sink at the dataset
-big_iNEXT <- iNEXT(abundance_list, datatype = 'abundance',
-                   q = c(1,2,3))
-
-# using the fortify command we can turn the iNEXT object into a happy friendly 
-# dataframe, for easier analysis and plotting
-fortified_iNEXT <- fortify(big_iNEXT)
-# save the fortified object, as when we have lots of BINs the last few 
-# commands will take a long time
-write_csv(fortified_iNEXT, 'data/processed_data/fortified.csv')
-
+write_csv(tbl_1, file = here('results', 'table_1_basic_summary_stats.csv'))

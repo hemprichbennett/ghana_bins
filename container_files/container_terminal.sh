@@ -1,1 +1,1 @@
-docker run -i -t -v .:/home/rstudio/bin_accumulation hemprichbennett/bin_accumulation_img:2024-10-30 bash
+docker run -i -t -v .:/home/rstudio/bin_accumulation hemprichbennett/bin_accumulation_img:2025-09-19 bash

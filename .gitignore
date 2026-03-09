@@ -27,3 +27,4 @@ data/raw_data/BOLD_Public.11-Jul-2025.tsv
 results/*.csv
 results/*/*.csv
 results/*/*.xlsx
+*.zip

@@ -222,14 +222,21 @@ ggplot(trap_taxonomy_for_plotting,
                        name ='Percent of\nsamples containing')
 
 # make a table of the same values
-trap_taxonomy_table <- trap_taxonomy_for_plotting %>%
+trap_taxonomy_percentage_table <- trap_taxonomy_for_plotting %>%
   select(order, trap_type, percent_of_trap_abundance) %>%
   mutate(percent_of_trap_abundance = round(percent_of_trap_abundance,
                                            digits = 2)) %>%
   pivot_wider(names_from = trap_type, values_from = percent_of_trap_abundance)
 
-write_csv(trap_taxonomy_table, file = here('results', 'manuscript_tables',
-                                           'trap_taxonomy_percentage.csv'))
+write_csv(trap_taxonomy_percentage_table, file = here('results','table_2_trap_taxonomy_percentage.csv'))
+
+trap_taxonomy_abundance_table <- trap_taxonomy_for_plotting %>%
+  select(order, trap_type, n_samples_per_taxa) %>%
+  pivot_wider(names_from = trap_type, 
+              values_from = n_samples_per_taxa, 
+              values_fill = 0)
+
+write_csv(trap_taxonomy_abundance_table, file = here('results', 'si_table_trap_taxonomy_abundance.csv'))
 
 # NMDS analyses ---------------------------------------------------------------
 nmds_inputs <- list()
@@ -322,7 +329,7 @@ big_nmds_plot <- ggplot(data=nmds_scores,
   # increase point size in legend
   guides(colour = guide_legend(override.aes = list(size=10)))
 
-ggsave(here('figures', 'nmds', 'fig_x_big_nmds_plot.pdf'), big_nmds_plot,
+ggsave(here('figures', 'nmds', 'fig_2_big_nmds_plot.pdf'), big_nmds_plot,
        dpi = 600)
 
 # save the habitat NMDS plot as a basic gridextra format one
@@ -331,7 +338,7 @@ multipanel_nmds <- grid.arrange(nmds_habitat_plots$order,
              nmds_habitat_plots$genus,
              nmds_habitat_plots$bin,
              ncol = 2)
-ggsave(multipanel_nmds, filename = here('figures', 'fig_si_nmds.png'),
+ggsave(multipanel_nmds, filename = here('figures', 'fig_si4_nmds.png'),
        width = 10, height = 7)
 # Analyses ----------------------------------------------------------------
 
@@ -353,30 +360,11 @@ for(taxa in taxonomic_levels){
   
   tests_list[[taxa]] %>%
     broom::tidy() %>%
+    # save summary values used in-manuscript text
     write_csv(here('results', 'adonis', paste0(taxa, '_summary.csv')))
 }
 
 tests_list[['genus']]
-
-# test for betadispersion
-library(broom)
-order_bd <- betadisper(dist(nmds_inputs[['order']]$trap_matrix), nmds_outputs[['order']]$scores$trap_type)
-# is the data betadispersed? ("Is there difference in within-group variation 
-# between groups." I think.)
-anova(order_bd) %>%
-  tidy() %>%
-  write_csv(here('results', 'adonis', 'order_betadispersion.csv'))
-
-
-family_bd <- betadisper(dist(nmds_inputs[['family']]$trap_matrix), nmds_outputs[['family']]$scores$trap_type)
-# is the data betadispersed? ("Is there difference in within-group variation 
-# between groups." I think.)
-anova(family_bd) %>%
-  tidy() %>%
-  write_csv(here('results', 'adonis', 'family_betadispersion.csv'))
-
-
-
 
 
 # Malaise trap time analyses ----------------------------------------------
@@ -480,7 +468,7 @@ big_malaise_nmds_plot <- ggplot(data=malaise_nmds_scores,
   guides(colour = guide_legend(override.aes = list(size=10)))
 
 big_malaise_nmds_plot
-ggsave(here('figures', 'nmds', 'si_fig_x_malaise_nmds_plot.png'), big_malaise_nmds_plot)
+ggsave(here('figures', 'nmds', 'si_fig_7_malaise_nmds_plot.png'), big_malaise_nmds_plot)
 
 
 
@@ -526,5 +514,5 @@ family_temporal_counts %>%
   arrange(order) %>%
   rename(Family = taxa, Order = order) %>%
   select(Order, Family, Day, Night) %>%
-  write_csv(file = here('results', 'supplementary_table_diurnal_activity.csv'))
+  write_csv(file = here('results', 'si_tbl_6_diurnal_activity.csv'))
 

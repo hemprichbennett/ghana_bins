@@ -7,12 +7,13 @@
 # Read in and explore bin reports ------------------------------------------
 
 library(tidyverse)
-our_bin_reports <- list.files(path = 'data/processed_data',
+library(here)
+our_bin_reports <- list.files(path = here('data', 'processed_data'),
                               pattern = 'bin_report',
                               recursive = T,
                               full.names = T) %>%
   map_dfr(read_tsv, id = 'project') %>%
-  mutate(project = gsub('.+data/|/bin.+', '', project)) 
+  mutate(project = gsub('.+data/|/bin.+|_bin_report.tsv', '', project)) 
 
 # a few of the our BINs have multiple rows within a single project,
 # because they have multiple taxonomic identifiers associated with them,
@@ -45,10 +46,12 @@ bind_rows(duplicate_bin_list) %>% group_by(actually_unique) %>% summarise(n = n(
 
 # Read in and check previous csvs -----------------------------------------
 
-our_big_df <- read_csv('data/processed_data/bold_and_earthcape_combined.csv')
-bold_public_info_df <- read_csv('data/processed_data/bold_public_bin_matches.csv')
+our_big_df <- read_csv(here('data', 'processed_data',
+                            'bold_and_earthcape_combined.csv'))
+bold_public_info_df <- read_csv(here('data', 'processed_data',
+                                     'bold_public_bin_matches.csv'))
 
-common_names <- read_csv('data/order_common_names.csv')
+common_names <- read_csv(here('data', 'order_common_names.csv'))
 
 our_bin_reports %>%
   filter(Unique == T) %>%
@@ -90,40 +93,6 @@ main_df <- overall_availability %>%
             by = c('BIN' = 'bin')) %>%
   left_join(common_names)
 
-# save this as a csv, as the big dataset will be useful to us later
-write_csv(main_df, 'data/processed_data/bold_data_with_availability.csv')
-
-# this returns the OVERALL number of SAMPLES which had a given
-# availability
-main_df %>%
-  group_by(order, available, english_common_name) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = available, values_from = n, 
-              values_fill = 0,
-              names_sort = T) %>%
-  write_csv('results/unique_data/overall_sample_uniqueness.csv')
-
-# now for Abutia
-main_df %>%
-  filter(exact_site == 'Abutia Amegame') %>%
-  group_by(order, available, english_common_name) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = available, values_from = n, 
-              values_fill = 0,
-              names_sort = T) %>%
-  write_csv('results/unique_data/abutia_sample_uniqueness.csv')
-
-# now for Mafi
-main_df %>%
-  filter(exact_site == 'Mafi Agorve') %>%
-  group_by(order, available, english_common_name) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = available, values_from = n, 
-              values_fill = 0,
-              names_sort = T) %>%
-  write_csv('results/unique_data/mafi_sample_uniqueness.csv')
-
-
 
 # now for number of BINs
 overall_uniqueness <- main_df %>%
@@ -135,29 +104,8 @@ overall_uniqueness <- main_df %>%
               values_fill = 0,
               names_sort = T)
 
-write_csv(overall_uniqueness, 'results/unique_data/overall_bin_uniqueness.csv')
-
-main_df %>%
-  select(order, available, english_common_name, BIN, exact_site) %>%
-  filter(exact_site == 'Abutia Amegame') %>%
-  distinct() %>%
-  group_by(order, available, english_common_name) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = available, values_from = n, 
-              values_fill = 0,
-              names_sort = T) %>%
-  write_csv('results/unique_data/abutia_bin_uniqueness.csv')
-
-main_df %>%
-  select(order, available, english_common_name, BIN, exact_site) %>%
-  filter(exact_site == 'Mafi Agorve') %>%
-  distinct() %>%
-  group_by(order, available, english_common_name) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = available, values_from = n, 
-              values_fill = 0,
-              names_sort = T) %>%
-  write_csv('results/unique_data/mafi_bin_uniqueness.csv')
+write_csv(overall_uniqueness, here('data', 'processed_data', 
+                                   'overall_bin_uniqueness.csv'))
 
 # summary information for the 200 most common BINs
 retention_threshold <- 200
@@ -168,6 +116,7 @@ abundant_bin_summary <- main_df %>%
   head(retention_threshold) %>%
   mutate(bold_url = paste0('https://portal.boldsystems.org/bin/',BIN))
 
+# table is not used in manuscript text or SI, but referred to in-text (lines 284 onwards in Sep/Oct 2025 submission)
 write_csv(abundant_bin_summary, 'results/abundant_bins.csv')
 
 abundant_bin_summary %>%
@@ -199,3 +148,63 @@ number_privately_held <- main_df %>% filter(available == 'Already sequenced, no 
 
 # percent hidden
 number_privately_held / total_n_bins * 100
+
+
+
+# Make a plot of the sequence lengths -------------------------------------
+
+#Some failed sequences have length zero, some have length NA. These both need 
+# accounting for
+
+for_seqlength_plot <- our_big_df %>%
+  # format the column better for analysis, as it's currently in a weird 
+  # character format
+  mutate(seqlength = gsub('\\[.+', '', coi_5p_seq_length),
+         seqlength = as.numeric(seqlength),
+         seqlength = na_if(seqlength, 0))
+
+
+library(ggrepel)
+
+# choose rule
+threshold <- quantile(for_seqlength_plot$seqlength, 0.99, na.rm = T)  # top 1%
+df <- within(for_seqlength_plot, is_outlier <- seqlength > threshold)
+
+ggplot(df, aes(y = seqlength, x = 0)) +
+  geom_jitter(height = 0.12, alpha = 0.3) +
+  #geom_boxplot(outliers = F)+
+  theme_bw()+
+  #scale_x_log10()+
+  ylab('Sequence length (bp)')+
+  xlab(NULL)+
+  theme(
+    text = element_text(size = 15),
+    axis.text.x  = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.line.x  = element_blank()
+  )
+  # geom_point(data = subset(df, is_outlier), aes(x = seqlength, y = 0), color = "red", size = 2) +
+  # ggrepel::geom_text_repel(data = subset(df, is_outlier),
+  #                          aes(x = seqlength, y = 0, label = seqlength),
+  #                          nudge_y = 0.2) +
+  # #theme_void() +
+  # labs(title = "Outliers highlighted (top 1%)")
+
+
+# ggplot(filter(for_seqlength_plot, !is.na(seqlength)), aes(x = seqlength))+
+#   geom_histogram(binwidth = 10)+
+#   theme_bw()+
+#   xlab('Sequence length')+
+#   ylab('Number of sequences')
+
+ggsave(filename = here('figures', 'fig_si_x_seqlengths.png'), width = 10, height = 12)
+  
+# summary stats for plot
+mean(for_seqlength_plot$seqlength, na.rm = T)
+sd(for_seqlength_plot$seqlength, na.rm = T)
+
+# the number of samples that DID NOT generate a sequence
+length(which(is.na(for_seqlength_plot$seqlength)))
+
+# the number of samples that DID generate a sequence
+length(which(!is.na(for_seqlength_plot$seqlength)))
